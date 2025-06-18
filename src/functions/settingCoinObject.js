@@ -1,4 +1,6 @@
 export const settingCoinObject = (data, setCoin) => {
+  console.log("this is data",data.id);
+  
   setCoin({
     id: data.id,
     name: data.name,

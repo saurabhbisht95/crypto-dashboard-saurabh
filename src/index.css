@@ -83,9 +83,9 @@ a {
   position: fixed;
   transform: translateX(-50%) translateY(-50%);
   pointer-events: none;
-  background-color: var(--blue);
+  /* background-color: var(--blue); */
   z-index: 10000;
-  border: 2px solid var(--blue);
+  /* border: 2px solid var(--blue); */
   height: 0.3rem;
   width: 0.3rem;
   border-radius: 50%;
@@ -99,7 +99,7 @@ a {
   background-color: transparent;
   border-radius: 50%;
   z-index: 10000;
-  border: 2px solid var(--blue);
+  /* border: 2px solid var(--blue); */
   height: 2rem;
   width: 2rem;
   transition: all 400ms ease-out;

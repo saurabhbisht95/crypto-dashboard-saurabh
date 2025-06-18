@@ -1,0 +1,220 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--black);
+  color: white;
+  line-height: 1.5;
+}
+
+.auth-wrapper {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background-color: #121212;
+}
+
+.background-gradient {
+  position: absolute;
+  right: 0;
+  top: 80px;
+  width: 250px;
+  z-index: 1;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.auth-layout {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 100vh;
+}
+
+.auth-image-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* iPhone and gradient image stack */
+.iphone-stack {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: 450px; /* adjust as needed */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Gradient background behind iPhone */
+.gradient-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: auto;
+  z-index: 0;
+  transform: translate(-40px, -30px); /* shift up & left */
+  opacity: 0.7;
+}
+
+/* Floating iPhone */
+.floating-iphone {
+  position: relative;
+  width: 280px;
+  height: auto;
+  z-index: 1;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(-8px);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+  
+
+.auth-container {
+  background-color: var(--black);
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.auth-card {
+  background-color: var(--white);
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  width: 100%;
+  max-width: 400px;
+  transition: all 0.3s ease;
+}
+
+.auth-card:hover {
+  box-shadow: 0 0 30px rgba(92, 92, 255, 0.3);
+}
+
+.auth-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: var(--blue);
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--black);
+}
+
+.auth-form .input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background-color: var(--gray);
+  color: var(--black);
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.auth-form .input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--blue);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+.auth-card p {
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--black);
+  text-align: start;
+}
+
+.auth-card a {
+  color: #5c5cff;
+  text-decoration: none;
+}
+
+.auth-card a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .auth-layout {
+    flex-direction: column;
+  }
+
+  .auth-image-container {
+    display: none;
+  }
+
+  .auth-container {
+    padding: 2rem 1rem;
+  }
+
+  .auth-card {
+    padding: 2rem;
+  }
+
+  .auth-title {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 1.5rem;
+    border-radius: 10px;
+  }
+
+  .auth-title {
+    font-size: 1.5rem;
+  }
+
+  .btn-primary {
+    font-size: 0.95rem;
+  }
+}

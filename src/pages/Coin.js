@@ -31,7 +31,7 @@ function Coin() {
   const getData = async () => {
     setLoading(true);
     let coinData = await getCoinData(id, setError);
-    console.log("Coin DATA>>>>", coinData);
+    // console.log("Coin DATA>>>>", coinData);
     settingCoinObject(coinData, setCoin);
     if (coinData) {
       const prices = await getPrices(id, days, priceType, setError);
