@@ -10,6 +10,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useEffect } from "react";
 import Login from "./pages/Login/Login";
+import Signup from "./pages/Signup/Signup";
 
 function App() {
   const theme = createTheme({
@@ -65,6 +66,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/coin/:id" element={<Coin />} />
             <Route path="/compare" element={<Compare />} />
