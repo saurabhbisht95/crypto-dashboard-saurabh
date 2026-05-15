@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import "./styles.css";
 import TrendingDownRoundedIcon from "@mui/icons-material/TrendingDownRounded";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
@@ -11,17 +12,21 @@ import { removeItemToWatchlist } from "../../../functions/removeItemToWatchlist"
 function Grid({ coin, delay }) {
   const watchlist = JSON.parse(localStorage.getItem("watchlist"));
   const [isCoinAdded, setIsCoinAdded] = useState(watchlist?.includes(coin.id));
+  const priceChange = coin.price_change_percentage_24h || 0;
+  const currentPrice = coin.current_price || 0;
+  const totalVolume = coin.total_volume || 0;
+  const marketCap = coin.market_cap || 0;
 
   return (
-    <a href={`/coin/${coin.id}`}>
+    <Link to={`/coin/${coin.id}`}>
       <motion.div
-        className={`grid ${coin.price_change_percentage_24h < 0 && "grid-red"}`}
+        className={`grid ${priceChange < 0 && "grid-red"}`}
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: delay }}
       >
         <div className="img-flex">
-          <img src={coin.image} className="coin-image" />
+          <img src={coin.image} className="coin-image" alt={coin.name} />
           <div className="icon-flex">
             <div className="info-flex">
               <p className="coin-symbol">{coin.symbol}</p>
@@ -29,7 +34,7 @@ function Grid({ coin, delay }) {
             </div>
             <div
               className={`watchlist-icon ${
-                coin.price_change_percentage_24h < 0 && "watchlist-icon-red"
+                priceChange < 0 && "watchlist-icon-red"
               }`}
               onClick={(e) => {
                 if (isCoinAdded) {
@@ -46,10 +51,10 @@ function Grid({ coin, delay }) {
             </div>
           </div>
         </div>
-        {coin.price_change_percentage_24h >= 0 ? (
+        {priceChange >= 0 ? (
           <div className="chip-flex">
             <div className="price-chip">
-              {coin.price_change_percentage_24h.toFixed(2)}%
+              {priceChange.toFixed(2)}%
             </div>
             <div className="chip-icon">
               <TrendingUpRoundedIcon />
@@ -58,30 +63,30 @@ function Grid({ coin, delay }) {
         ) : (
           <div className="chip-flex">
             <div className="price-chip red">
-              {coin.price_change_percentage_24h.toFixed(2)}%
+              {priceChange.toFixed(2)}%
             </div>
             <div className="chip-icon red">
               <TrendingDownRoundedIcon />
             </div>
           </div>
         )}
-        {coin.price_change_percentage_24h >= 0 ? (
+        {priceChange >= 0 ? (
           <p className="current-price">
-            ${coin.current_price.toLocaleString()}
+            ${currentPrice.toLocaleString()}
           </p>
         ) : (
           <p className="current-price-red">
-            ${coin.current_price.toLocaleString()}
+            ${currentPrice.toLocaleString()}
           </p>
         )}
         <p className="coin-name">
-          Total Volume : {coin.total_volume.toLocaleString()}
+          Total Volume : {totalVolume.toLocaleString()}
         </p>
         <p className="coin-name">
-          Market Capital : ${coin.market_cap.toLocaleString()}
+          Market Capital : ${marketCap.toLocaleString()}
         </p>
       </motion.div>
-    </a>
+    </Link>
   );
 }
 

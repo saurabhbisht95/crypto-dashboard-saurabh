@@ -6,7 +6,6 @@ import TabPanel from "@mui/lab/TabPanel";
 import "./styles.css";
 import Grid from "../Grid";
 import List from "../List";
-import { convertNumber } from "../../../functions/convertNumber";
 import Button from "../../Common/Button";
 
 export default function TabsComponent({ coins, setSearch }) {
@@ -52,7 +51,9 @@ export default function TabsComponent({ coins, setSearch }) {
                   margin: "2rem",
                 }}
               >
-                <Button text="Clear Search" onClick={() => setSearch("")} />
+                {setSearch && (
+                  <Button text="Clear Search" onClick={() => setSearch("")} />
+                )}
               </div>
             </div>
           )}
@@ -76,7 +77,9 @@ export default function TabsComponent({ coins, setSearch }) {
                   margin: "2rem",
                 }}
               >
-                <Button text="Clear Search" onClick={() => setSearch("")} />
+                {setSearch && (
+                  <Button text="Clear Search" onClick={() => setSearch("")} />
+                )}
               </div>
             </div>
           )}

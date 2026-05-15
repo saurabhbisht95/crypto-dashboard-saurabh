@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Info from "../components/CoinPage/Info";
 import LineChart from "../components/CoinPage/LineChart";
 import ToggleComponents from "../components/CoinPage/ToggleComponent";
 import Header from "../components/Common/Header";
 import Loader from "../components/Common/Loader";
+import ErrorState from "../components/Common/ErrorState";
 import SelectCoins from "../components/ComparePage/SelectCoins";
 import List from "../components/Dashboard/List";
+import { getApiErrorMessage } from "../functions/api";
 import { get100Coins } from "../functions/get100Coins";
 import { getCoinData } from "../functions/getCoinData";
 import { getPrices } from "../functions/getPrices";
@@ -14,7 +16,9 @@ import { settingCoinObject } from "../functions/settingCoinObject";
 
 function Compare() {
   const [allCoins, setAllCoins] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const requestIdRef = useRef(0);
   // id states
   const [crypto1, setCrypto1] = useState("bitcoin");
   const [crypto2, setCrypto2] = useState("ethereum");
@@ -29,82 +33,99 @@ function Compare() {
     datasets: [],
   });
 
-  useEffect(() => {
-    getData();
+  const getAllCoins = useCallback(async () => {
+    try {
+      const coins = await get100Coins();
+      setAllCoins(Array.isArray(coins) ? coins : []);
+    } catch {
+      setAllCoins([]);
+    }
   }, []);
 
-  const getData = async () => {
+  const getComparisonData = useCallback(async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setLoading(true);
-    const coins = await get100Coins();
-    if (coins) {
-      setAllCoins(coins);
-      const data1 = await getCoinData(crypto1);
-      const data2 = await getCoinData(crypto2);
-      settingCoinObject(data1, setCoin1Data);
-      settingCoinObject(data2, setCoin2Data);
-      if (data1 && data2) {
-        // getPrices
-        const prices1 = await getPrices(crypto1, days, priceType);
-        const prices2 = await getPrices(crypto2, days, priceType);
-        settingChartData(setChartData, prices1, prices2);
+    setError("");
+
+    try {
+      const [data1, data2, prices1, prices2] = await Promise.all([
+        getCoinData(crypto1),
+        getCoinData(crypto2),
+        getPrices(crypto1, days, priceType),
+        getPrices(crypto2, days, priceType),
+      ]);
+
+      if (requestId !== requestIdRef.current) return;
+
+      const coin1 = settingCoinObject(data1, setCoin1Data);
+      const coin2 = settingCoinObject(data2, setCoin2Data);
+      const chartReady = settingChartData(setChartData, prices1, prices2, [
+        coin1?.name || crypto1,
+        coin2?.name || crypto2,
+      ]);
+
+      if (!coin1 || !coin2 || !chartReady) {
+        throw new Error("Incomplete comparison data received.");
+      }
+    } catch (err) {
+      if (requestId !== requestIdRef.current) return;
+
+      setError(
+        getApiErrorMessage(
+          err,
+          "Comparison data could not be loaded. Please retry or choose another coin."
+        )
+      );
+    } finally {
+      if (requestId === requestIdRef.current) {
         setLoading(false);
       }
     }
-  };
+  }, [crypto1, crypto2, days, priceType]);
 
-  const onCoinChange = async (e, isCoin2) => {
-    setLoading(true);
+  useEffect(() => {
+    getAllCoins();
+  }, [getAllCoins]);
+
+  useEffect(() => {
+    getComparisonData();
+  }, [getComparisonData]);
+
+  const onCoinChange = (e, isCoin2) => {
     if (isCoin2) {
       const newCrypto2 = e.target.value;
-      // crypto2 is being changed
+      if (!newCrypto2 || newCrypto2 === crypto1) return;
       setCrypto2(newCrypto2);
-      // fetch coin2 data
-      const data2 = await getCoinData(newCrypto2);
-      settingCoinObject(data2, setCoin2Data);
-      // fetch prices again
-      const prices1 = await getPrices(crypto1, days, priceType);
-      const prices2 = await getPrices(newCrypto2, days, priceType);
-      settingChartData(setChartData, prices1, prices2);
     } else {
       const newCrypto1 = e.target.value;
-      // crypto1 is being changed
+      if (!newCrypto1 || newCrypto1 === crypto2) return;
       setCrypto1(newCrypto1);
-      // fetch coin1 data
-      const data1 = await getCoinData(newCrypto1);
-      settingCoinObject(data1, setCoin1Data);
-      // fetch coin prices
-      const prices1 = await getPrices(newCrypto1, days, priceType);
-      const prices2 = await getPrices(crypto2, days, priceType);
-      settingChartData(setChartData, prices1, prices2);
     }
-    setLoading(false);
   };
 
-  const handleDaysChange = async (e) => {
-    const newDays = e.target.value;
-    setLoading(true);
+  const handleDaysChange = (e) => {
+    const newDays = Number(e.target.value);
+    if (!newDays) return;
     setDays(newDays);
-    const prices1 = await getPrices(crypto1, newDays, priceType);
-    const prices2 = await getPrices(crypto2, newDays, priceType);
-    settingChartData(setChartData, prices1, prices2);
-    setLoading(false);
   };
 
-  const handlePriceTypeChange = async (e) => {
-    const newPriceType = e.target.value;
-    setLoading(true);
+  const handlePriceTypeChange = (newPriceType) => {
+    if (!newPriceType) return;
     setPriceType(newPriceType);
-    const prices1 = await getPrices(crypto1, days, newPriceType);
-    const prices2 = await getPrices(crypto2, days, newPriceType);
-    settingChartData(setChartData, prices1, prices2);
-    setLoading(false);
   };
 
   return (
     <div>
       <Header />
-      {loading || !coin1Data?.id || !coin2Data?.id ? (
+      {loading || (!error && (!coin1Data?.id || !coin2Data?.id)) ? (
         <Loader />
+      ) : error ? (
+        <ErrorState
+          title="Comparison could not be loaded"
+          message={error}
+          onAction={getComparisonData}
+        />
       ) : (
         <>
           <SelectCoins

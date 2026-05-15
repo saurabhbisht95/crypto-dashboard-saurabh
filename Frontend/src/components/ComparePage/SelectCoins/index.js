@@ -1,5 +1,5 @@
 import { MenuItem, Select } from "@mui/material";
-import React, { useState } from "react";
+import React from "react";
 import SelectDays from "../../CoinPage/SelectDays";
 import "./styles.css";
 
@@ -11,6 +11,14 @@ function SelectCoins({
   days,
   handleDaysChange,
 }) {
+  const coinOptions =
+    allCoins.length > 0
+      ? allCoins
+      : [
+          { id: crypto1, name: crypto1 },
+          { id: crypto2, name: crypto2 },
+        ];
+
   const style = {
     height: "2.5rem",
     color: "var(--white)",
@@ -36,10 +44,10 @@ function SelectCoins({
           onChange={(e) => onCoinChange(e, false)}
           sx={style}
         >
-          {allCoins
-            .filter((coin) => coin.id != crypto2)
-            .map((coin, i) => (
-              <MenuItem value={coin.id} key={i}>
+          {coinOptions
+            .filter((coin) => coin.id !== crypto2)
+            .map((coin) => (
+              <MenuItem value={coin.id} key={coin.id}>
                 {coin.name}
               </MenuItem>
             ))}
@@ -52,10 +60,10 @@ function SelectCoins({
           onChange={(e) => onCoinChange(e, true)}
           sx={style}
         >
-          {allCoins
-            .filter((coin) => coin.id != crypto1)
-            .map((coin, i) => (
-              <MenuItem value={coin.id} key={i}>
+          {coinOptions
+            .filter((coin) => coin.id !== crypto1)
+            .map((coin) => (
+              <MenuItem value={coin.id} key={coin.id}>
                 {coin.name}
               </MenuItem>
             ))}

@@ -1,8 +1,10 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
-import { Chart as ChartJS } from "chart.js/auto"; //Dont get rid of this
+import "chart.js/auto";
 
 function LineChart({ chartData, multiAxis }) {
+  const hasData = chartData?.datasets?.some((dataset) => dataset.data?.length);
+
   const options = {
     plugins: {
       legend: {
@@ -18,11 +20,22 @@ function LineChart({ chartData, multiAxis }) {
       crypto1: {
         position: "left",
       },
-      crypto2: multiAxis && {
-        position: "right",
-      },
+      ...(multiAxis
+        ? {
+            crypto2: {
+              position: "right",
+              grid: {
+                drawOnChartArea: false,
+              },
+            },
+          }
+        : {}),
     },
   };
+
+  if (!hasData) {
+    return <p style={{ textAlign: "center" }}>No chart data available.</p>;
+  }
 
   return <Line data={chartData} options={options} />;
 }

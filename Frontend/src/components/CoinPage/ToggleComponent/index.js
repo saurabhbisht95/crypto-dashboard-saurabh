@@ -1,10 +1,5 @@
-import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
-import FormatAlignCenterIcon from "@mui/icons-material/FormatAlignCenter";
-import FormatAlignRightIcon from "@mui/icons-material/FormatAlignRight";
-import FormatAlignJustifyIcon from "@mui/icons-material/FormatAlignJustify";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import { useState } from "react";
 
 export default function ToggleComponents({ priceType, handlePriceTypeChange }) {
   return (
@@ -19,8 +14,8 @@ export default function ToggleComponents({ priceType, handlePriceTypeChange }) {
       <ToggleButtonGroup
         value={priceType}
         exclusive
-        onChange={(e) => {
-          handlePriceTypeChange(e);
+        onChange={(event, newPriceType) => {
+          handlePriceTypeChange(newPriceType);
         }}
         sx={{
           "&.Mui-selected": {

@@ -2,6 +2,7 @@ import { toast } from "react-toastify";
 
 export const saveItemToWatchlist = (e, id) => {
   e.preventDefault();
+  e.stopPropagation();
   let watchlist = JSON.parse(localStorage.getItem("watchlist"));
 
   if (watchlist) {

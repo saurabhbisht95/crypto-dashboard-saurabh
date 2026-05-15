@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import "./styles.css";
 
 import Pagination from "@mui/material/Pagination";
 
-export default function PaginationControlled({ page, handlePageChange }) {
+export default function PaginationControlled({ page, count = 10, handlePageChange }) {
   return (
     <div className="pagination-div">
       <Pagination
@@ -23,7 +23,7 @@ export default function PaginationControlled({ page, handlePageChange }) {
             border: "none",
           },
         }}
-        count={10}
+        count={count}
         page={page}
         onChange={handlePageChange}
       />

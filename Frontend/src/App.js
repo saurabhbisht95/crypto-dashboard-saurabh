@@ -6,7 +6,7 @@ import Compare from "./pages/Compare";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Watchlist from "./pages/Watchlist";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useEffect } from "react";
 import Login from "./pages/Login/Login";
@@ -21,39 +21,48 @@ function App() {
     },
   });
 
-  var cursor;
-  var cursorPointer;
-
   useEffect(() => {
-    cursor = document.getElementById("cursor");
-    cursorPointer = document.getElementById("cursor-pointer");
+    const cursor = document.getElementById("cursor");
+    const cursorPointer = document.getElementById("cursor-pointer");
 
-    document.body.addEventListener("mousemove", function (e) {
+    if (!cursor || !cursorPointer) return;
+
+    const handleMouseMove = (e) => {
       return (
         (cursor.style.left = e.clientX + "px"),
         (cursor.style.top = e.clientY + "px"),
         (cursorPointer.style.left = e.clientX + "px"),
         (cursorPointer.style.top = e.clientY + "px")
       );
-    });
+    };
 
-    document.body.addEventListener("mousedown", function (e) {
+    const handleMouseDown = () => {
       return (
         (cursor.style.height = "0.5rem"),
         (cursor.style.width = "0.5rem"),
         (cursorPointer.style.height = "3rem"),
         (cursorPointer.style.width = "3rem")
       );
-    });
+    };
 
-    document.body.addEventListener("mouseup", function (e) {
+    const handleMouseUp = () => {
       return (
         (cursor.style.height = "0.3rem"),
         (cursor.style.width = "0.3rem"),
         (cursorPointer.style.height = "2rem"),
         (cursorPointer.style.width = "2rem")
       );
-    });
+    };
+
+    document.body.addEventListener("mousemove", handleMouseMove);
+    document.body.addEventListener("mousedown", handleMouseDown);
+    document.body.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.body.removeEventListener("mousemove", handleMouseMove);
+      document.body.removeEventListener("mousedown", handleMouseDown);
+      document.body.removeEventListener("mouseup", handleMouseUp);
+    };
   }, []);
 
   return (

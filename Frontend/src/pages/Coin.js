@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import Info from "../components/CoinPage/Info";
 import LineChart from "../components/CoinPage/LineChart";
 import SelectDays from "../components/CoinPage/SelectDays";
 import ToggleComponents from "../components/CoinPage/ToggleComponent";
 import Button from "../components/Common/Button";
+import ErrorState from "../components/Common/ErrorState";
 import Header from "../components/Common/Header";
 import Loader from "../components/Common/Loader";
 import List from "../components/Dashboard/List";
+import { getApiErrorMessage } from "../functions/api";
 import { getCoinData } from "../functions/getCoinData";
 import { getPrices } from "../functions/getPrices";
 import { settingChartData } from "../functions/settingChartData";
@@ -15,51 +17,64 @@ import { settingCoinObject } from "../functions/settingCoinObject";
 
 function Coin() {
   const { id } = useParams();
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState({ labels: [], datasets: [{}] });
   const [coin, setCoin] = useState({});
   const [days, setDays] = useState(30);
   const [priceType, setPriceType] = useState("prices");
+  const requestIdRef = useRef(0);
+
+  const getData = useCallback(async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setLoading(true);
+    setError("");
+
+    try {
+      const [coinData, prices] = await Promise.all([
+        getCoinData(id),
+        getPrices(id, days, priceType),
+      ]);
+
+      if (requestId !== requestIdRef.current) return;
+
+      const mappedCoin = settingCoinObject(coinData, setCoin);
+      const chartReady = settingChartData(setChartData, prices);
+
+      if (!mappedCoin || !chartReady) {
+        throw new Error("Incomplete coin data received.");
+      }
+    } catch (err) {
+      if (requestId !== requestIdRef.current) return;
+      setError(
+        getApiErrorMessage(
+          err,
+          "Sorry, we could not find the coin you're looking for."
+        )
+      );
+    } finally {
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [days, id, priceType]);
 
   useEffect(() => {
     if (id) {
       getData();
     }
-  }, [id]);
+  }, [getData, id]);
 
-  const getData = async () => {
-    setLoading(true);
-    let coinData = await getCoinData(id, setError);
-    // console.log("Coin DATA>>>>", coinData);
-    settingCoinObject(coinData, setCoin);
-    if (coinData) {
-      const prices = await getPrices(id, days, priceType, setError);
-      if (prices) {
-        settingChartData(setChartData, prices);
-        setLoading(false);
-      }
-    }
+  const handleDaysChange = (event) => {
+    const newDays = Number(event.target.value);
+    if (!newDays) return;
+    setDays(newDays);
   };
 
-  const handleDaysChange = async (event) => {
-    setLoading(true);
-    setDays(event.target.value);
-    const prices = await getPrices(id, event.target.value, priceType, setError);
-    if (prices) {
-      settingChartData(setChartData, prices);
-      setLoading(false);
-    }
-  };
-
-  const handlePriceTypeChange = async (event) => {
-    setLoading(true);
-    setPriceType(event.target.value);
-    const prices = await getPrices(id, days, event.target.value, setError);
-    if (prices) {
-      settingChartData(setChartData, prices);
-      setLoading(false);
-    }
+  const handlePriceTypeChange = (newPriceType) => {
+    if (!newPriceType) return;
+    setPriceType(newPriceType);
   };
 
   return (
@@ -81,10 +96,12 @@ function Coin() {
           <Info title={coin.name} desc={coin.desc} />
         </>
       ) : error ? (
-        <div>
-          <h1 style={{ textAlign: "center" }}>
-            Sorry, Couldn't find the coin you're looking for 😞
-          </h1>
+        <>
+          <ErrorState
+            title="Coin data could not be loaded"
+            message={error}
+            onAction={getData}
+          />
           <div
             style={{
               display: "flex",
@@ -92,11 +109,11 @@ function Coin() {
               margin: "2rem",
             }}
           >
-            <a href="/dashboard">
+            <Link to="/dashboard">
               <Button text="Dashboard" />
-            </a>
+            </Link>
           </div>
-        </div>
+        </>
       ) : (
         <Loader />
       )}

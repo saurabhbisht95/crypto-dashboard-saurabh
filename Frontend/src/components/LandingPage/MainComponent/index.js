@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Button from "../../Common/Button";
 import "./styles.css";
 import gradient from "../../../assets/gradient.png";
@@ -44,9 +45,9 @@ function MainComponent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.25, duration: 0.75 }}
         >
-          <a href="/dashboard">
+          <Link to="/dashboard">
             <Button text={"Dashboard"} />
-          </a>
+          </Link>
           <RWebShare
             data={{
               text: "CryptoDashboard made by Saurabh Bisht using React JS.",
@@ -60,10 +61,11 @@ function MainComponent() {
         </motion.div>
       </div>
       <div className="gradient-div">
-        <img src={gradient} className="gradient" />
+        <img src={gradient} className="gradient" alt="" />
         <motion.img
           src={iphone}
           className="iphone"
+          alt="CryptoTracker dashboard preview"
           initial={{ y: -10 }}
           animate={{ y: 10 }}
           transition={{

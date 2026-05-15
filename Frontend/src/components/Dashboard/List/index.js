@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./styles.css";
 import TrendingDownRoundedIcon from "@mui/icons-material/TrendingDownRounded";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
@@ -11,97 +12,102 @@ import StarIcon from "@mui/icons-material/Star";
 import { removeItemToWatchlist } from "../../../functions/removeItemToWatchlist";
 
 function List({ coin, delay }) {
+  const navigate = useNavigate();
   const watchlist = JSON.parse(localStorage.getItem("watchlist"));
   const [isCoinAdded, setIsCoinAdded] = useState(watchlist?.includes(coin.id));
+  const priceChange = coin.price_change_percentage_24h || 0;
+  const currentPrice = coin.current_price || 0;
+  const totalVolume = coin.total_volume || 0;
+  const marketCap = coin.market_cap || 0;
+
   return (
-    <a href={`/coin/${coin.id}`}>
-      <motion.tr
-        className="list-row"
-        initial={{ opacity: 0, x: -50 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: delay }}
-      >
-        <Tooltip title="Coin Image">
-          <td className="td-img">
-            <img src={coin.image} className="coin-image coin-image-td" />
-          </td>
-        </Tooltip>
-        <Tooltip title="Coin Info" placement="bottom-start">
-          <td className="td-info">
-            <div className="info-flex">
-              <p className="coin-symbol td-p">{coin.symbol}</p>
-              <p className="coin-name td-p">{coin.name}</p>
+    <motion.tr
+      className="list-row"
+      initial={{ opacity: 0, x: -50 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5, delay: delay }}
+      onClick={() => navigate(`/coin/${coin.id}`)}
+    >
+      <Tooltip title="Coin Image">
+        <td className="td-img">
+          <img
+            src={coin.image}
+            className="coin-image coin-image-td"
+            alt={coin.name}
+          />
+        </td>
+      </Tooltip>
+      <Tooltip title="Coin Info" placement="bottom-start">
+        <td className="td-info">
+          <div className="info-flex">
+            <p className="coin-symbol td-p">{coin.symbol}</p>
+            <p className="coin-name td-p">{coin.name}</p>
+          </div>
+        </td>
+      </Tooltip>
+      <Tooltip title="Coin Price Percentage In 24hrs" placement="bottom-start">
+        {priceChange >= 0 ? (
+          <td>
+            <div className="chip-flex">
+              <div className="price-chip">
+                {priceChange.toFixed(2)}%
+              </div>
+              <div className="chip-icon td-chip-icon">
+                <TrendingUpRoundedIcon />
+              </div>
             </div>
           </td>
-        </Tooltip>
-        <Tooltip
-          title="Coin Price Percentage In 24hrs"
-          placement="bottom-start"
-        >
-          {coin.price_change_percentage_24h >= 0 ? (
-            <td>
-              <div className="chip-flex">
-                <div className="price-chip">
-                  {coin.price_change_percentage_24h.toFixed(2)}%
-                </div>
-                <div className="chip-icon td-chip-icon">
-                  <TrendingUpRoundedIcon />
-                </div>
+        ) : (
+          <td>
+            <div className="chip-flex">
+              <div className="price-chip red">
+                {priceChange.toFixed(2)}%
               </div>
-            </td>
-          ) : (
-            <td>
-              <div className="chip-flex">
-                <div className="price-chip red">
-                  {coin.price_change_percentage_24h.toFixed(2)}%
-                </div>
-                <div className="chip-icon td-chip-icon red">
-                  <TrendingDownRoundedIcon />
-                </div>
+              <div className="chip-icon td-chip-icon red">
+                <TrendingDownRoundedIcon />
               </div>
-            </td>
-          )}
-        </Tooltip>
-        <Tooltip title="Coin Price In USD" placement="bottom-end">
-          {coin.price_change_percentage_24h >= 0 ? (
-            <td className="current-price  td-current-price">
-              ${coin.current_price.toLocaleString()}
-            </td>
-          ) : (
-            <td className="current-price-red td-current-price">
-              ${coin.current_price.toLocaleString()}
-            </td>
-          )}
-        </Tooltip>
-        <Tooltip title="Coin Total Volume" placement="bottom-end">
-          <td className="coin-name td-totalVolume">
-            {coin.total_volume.toLocaleString()}
+            </div>
           </td>
-        </Tooltip>
-        <Tooltip title="Coin Market Capital" placement="bottom-end">
-          <td className="coin-name td-marketCap">
-            ${coin.market_cap.toLocaleString()}
+        )}
+      </Tooltip>
+      <Tooltip title="Coin Price In USD" placement="bottom-end">
+        {priceChange >= 0 ? (
+          <td className="current-price  td-current-price">
+            ${currentPrice.toLocaleString()}
           </td>
-        </Tooltip>
-        <td className="coin-name mobile">${convertNumber(coin.market_cap)}</td>
-        <td
-          className={`watchlist-icon ${
-            coin.price_change_percentage_24h < 0 && "watchlist-icon-red"
-          }`}
-          onClick={(e) => {
-            if (isCoinAdded) {
-              // remove coin
-              removeItemToWatchlist(e, coin.id, setIsCoinAdded);
-            } else {
-              setIsCoinAdded(true);
-              saveItemToWatchlist(e, coin.id);
-            }
-          }}
-        >
-          {isCoinAdded ? <StarIcon /> : <StarOutlineIcon />}
+        ) : (
+          <td className="current-price-red td-current-price">
+            ${currentPrice.toLocaleString()}
+          </td>
+        )}
+      </Tooltip>
+      <Tooltip title="Coin Total Volume" placement="bottom-end">
+        <td className="coin-name td-totalVolume">
+          {totalVolume.toLocaleString()}
         </td>
-      </motion.tr>
-    </a>
+      </Tooltip>
+      <Tooltip title="Coin Market Capital" placement="bottom-end">
+        <td className="coin-name td-marketCap">
+          ${marketCap.toLocaleString()}
+        </td>
+      </Tooltip>
+      <td className="coin-name mobile">${convertNumber(marketCap)}</td>
+      <td
+        className={`watchlist-icon ${
+          priceChange < 0 && "watchlist-icon-red"
+        }`}
+        onClick={(e) => {
+          if (isCoinAdded) {
+            removeItemToWatchlist(e, coin.id, setIsCoinAdded);
+          } else {
+            setIsCoinAdded(true);
+            saveItemToWatchlist(e, coin.id);
+          }
+        }}
+      >
+        {isCoinAdded ? <StarIcon /> : <StarOutlineIcon />}
+      </td>
+    </motion.tr>
   );
 }
 

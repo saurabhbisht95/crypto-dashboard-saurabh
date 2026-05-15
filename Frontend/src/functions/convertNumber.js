@@ -1,20 +1,20 @@
 export const convertNumber = (number) => {
+  if (!Number.isFinite(number)) {
+    return "0";
+  }
+
   const numberWithCommas = number.toLocaleString();
-  var arr = numberWithCommas.split(",");
-  if (arr.length == 5) {
-    //Trillions
+  const arr = numberWithCommas.split(",");
+
+  if (arr.length === 5) {
     return arr[0] + "." + arr[1].slice(0, 2) + "T";
-  } else if (arr.length == 4) {
-    //Billions
+  } else if (arr.length === 4) {
     return arr[0] + "." + arr[1].slice(0, 2) + "B";
-  } else if (arr.length == 3) {
-    // Millions
+  } else if (arr.length === 3) {
     return arr[0] + "." + arr[1].slice(0, 2) + "M";
-  } else if (arr.length == 2) {
-    // Thousands
+  } else if (arr.length === 2) {
     return arr[0] + "." + arr[1].slice(0, 2) + "K";
   } else {
-    // Hundreds
     return number.toLocaleString();
   }
 };
