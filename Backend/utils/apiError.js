@@ -5,7 +5,6 @@ class ApiError extends Error {
         erros = [],
         stack = ''
     )
-    //override the constructor
     {
         super(message)
         this.statusCode = statusCode
