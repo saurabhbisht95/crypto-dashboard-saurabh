@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getJsonStorageValue, setJsonStorageValue } from "./storage";
 
 const COINGECKO_API_BASE_URL = "https://api.coingecko.com/api/v3";
 const CACHE_PREFIX = "cryptotracker:";
@@ -24,26 +25,14 @@ const getCacheKey = (path, params, cacheKey) => {
 };
 
 const readCache = (key) => {
-  try {
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : null;
-  } catch {
-    return null;
-  }
+  return getJsonStorageValue(key, null);
 };
 
 const writeCache = (key, data) => {
-  try {
-    localStorage.setItem(
-      key,
-      JSON.stringify({
-        data,
-        timestamp: Date.now(),
-      })
-    );
-  } catch {
-    // Cache is a performance/resilience layer only.
-  }
+  setJsonStorageValue(key, {
+    data,
+    timestamp: Date.now(),
+  });
 };
 
 const isRetryableError = (error) => {

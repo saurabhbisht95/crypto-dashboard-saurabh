@@ -5,15 +5,16 @@ import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import { IconButton } from "@mui/material";
 import Switch from "@mui/material/Switch";
 import { toast } from "react-toastify";
+import { getStorageValue, setStorageValue } from "../../../functions/storage";
 
 export default function TemporaryDrawer() {
   const [open, setOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("theme") === "dark" ? true : false
+    getStorageValue("theme") === "dark" ? true : false
   );
 
   useEffect(() => {
-    if (localStorage.getItem("theme") === "dark") {
+    if (getStorageValue("theme") === "dark") {
       setDark();
     } else {
       setLight();
@@ -21,7 +22,7 @@ export default function TemporaryDrawer() {
   }, []);
 
   const changeMode = () => {
-    if (localStorage.getItem("theme") !== "dark") {
+    if (getStorageValue("theme") !== "dark") {
       setDark();
     } else {
       setLight();
@@ -31,12 +32,12 @@ export default function TemporaryDrawer() {
   };
 
   const setDark = () => {
-    localStorage.setItem("theme", "dark");
+    setStorageValue("theme", "dark");
     document.documentElement.setAttribute("data-theme", "dark");
   };
 
   const setLight = () => {
-    localStorage.setItem("theme", "light");
+    setStorageValue("theme", "light");
     document.documentElement.setAttribute("data-theme", "light");
   };
   return (

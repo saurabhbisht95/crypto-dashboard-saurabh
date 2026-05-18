@@ -11,3 +11,18 @@
   color: var(--blue) !important;
   transition: all 0.3s;
 }
+
+.read-more-button {
+  display: inline;
+  margin-left: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--grey);
+  cursor: pointer;
+  font: inherit;
+}
+
+.read-more-button:hover {
+  color: var(--blue);
+}

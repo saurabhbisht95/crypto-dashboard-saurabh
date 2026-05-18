@@ -10,10 +10,11 @@ import StarOutlineIcon from "@mui/icons-material/StarOutline";
 import { saveItemToWatchlist } from "../../../functions/saveItemToWatchlist";
 import StarIcon from "@mui/icons-material/Star";
 import { removeItemToWatchlist } from "../../../functions/removeItemToWatchlist";
+import { getJsonStorageValue } from "../../../functions/storage";
 
 function List({ coin, delay }) {
   const navigate = useNavigate();
-  const watchlist = JSON.parse(localStorage.getItem("watchlist"));
+  const watchlist = getJsonStorageValue("watchlist", []);
   const [isCoinAdded, setIsCoinAdded] = useState(watchlist?.includes(coin.id));
   const priceChange = coin.price_change_percentage_24h || 0;
   const currentPrice = coin.current_price || 0;

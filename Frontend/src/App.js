@@ -6,6 +6,8 @@ import Compare from "./pages/Compare";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Watchlist from "./pages/Watchlist";
+import ForgotPassword from "./pages/ForgotPassword";
+import NotFound from "./pages/NotFound";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useEffect } from "react";
@@ -76,10 +78,12 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/coin/:id" element={<Coin />} />
             <Route path="/compare" element={<Compare />} />
             <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </ThemeProvider>

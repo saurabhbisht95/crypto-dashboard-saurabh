@@ -5,14 +5,15 @@ import TemporaryDrawer from "./drawer";
 import "./styles.css";
 import Switch from "@mui/material/Switch";
 import { toast } from "react-toastify";
+import { getStorageValue, setStorageValue } from "../../../functions/storage";
 
 function Header() {
   const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("theme") === "dark" ? true : false
+    getStorageValue("theme") === "dark" ? true : false
   );
 
   useEffect(() => {
-    if (localStorage.getItem("theme") === "dark") {
+    if (getStorageValue("theme") === "dark") {
       setDark();
     } else {
       setLight();
@@ -20,7 +21,7 @@ function Header() {
   }, []);
 
   const changeMode = () => {
-    if (localStorage.getItem("theme") !== "dark") {
+    if (getStorageValue("theme") !== "dark") {
       setDark();
     } else {
       setLight();
@@ -30,12 +31,12 @@ function Header() {
   };
 
   const setDark = () => {
-    localStorage.setItem("theme", "dark");
+    setStorageValue("theme", "dark");
     document.documentElement.setAttribute("data-theme", "dark");
   };
 
   const setLight = () => {
-    localStorage.setItem("theme", "light");
+    setStorageValue("theme", "light");
     document.documentElement.setAttribute("data-theme", "light");
   };
 

@@ -7,13 +7,11 @@ import Loader from "../components/Common/Loader";
 import TabsComponent from "../components/Dashboard/Tabs";
 import { getApiErrorMessage } from "../functions/api";
 import { get100Coins } from "../functions/get100Coins";
+import { getJsonStorageValue } from "../functions/storage";
 
 const getStoredWatchlist = () => {
-  try {
-    return JSON.parse(localStorage.getItem("watchlist")) || [];
-  } catch {
-    return [];
-  }
+  const watchlist = getJsonStorageValue("watchlist", []);
+  return Array.isArray(watchlist) ? watchlist : [];
 };
 
 function Watchlist() {
