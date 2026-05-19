@@ -4,6 +4,7 @@ import Info from "../components/CoinPage/Info";
 import LineChart from "../components/CoinPage/LineChart";
 import SelectDays from "../components/CoinPage/SelectDays";
 import ToggleComponents from "../components/CoinPage/ToggleComponent";
+import AdvancedCoinInsights from "../components/CoinPage/AdvancedCoinInsights";
 import Button from "../components/Common/Button";
 import ErrorState from "../components/Common/ErrorState";
 import Header from "../components/Common/Header";
@@ -158,6 +159,7 @@ function Coin() {
             )}
             <LineChart chartData={chartData} />
           </div>
+          <AdvancedCoinInsights coinId={id} />
           <Info title={coin.name} desc={coin.desc} />
         </>
       ) : error ? (

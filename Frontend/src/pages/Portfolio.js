@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Doughnut } from "react-chartjs-2";
+import "chart.js/auto";
 import { toast } from "react-toastify";
 import ErrorState from "../components/Common/ErrorState";
 import Header from "../components/Common/Header";
@@ -7,6 +9,16 @@ import { marketService } from "../services/marketService";
 import { portfolioService } from "../services/portfolioService";
 import { getApiMessage } from "../services/http";
 import "./FeaturePages.css";
+import "./MarketPages.css";
+
+const ALLOCATION_COLORS = [
+  "#3a80e9",
+  "#61c96f",
+  "#f9c74f",
+  "#f94141",
+  "#9b5de5",
+  "#00b4d8",
+];
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -115,6 +127,45 @@ function Portfolio() {
     }
   };
 
+  const handleExportCsv = () => {
+    const header = [
+      "Coin",
+      "Symbol",
+      "Amount",
+      "Average Buy Price",
+      "Current Price",
+      "Current Value",
+      "Invested Value",
+      "Profit Loss",
+      "Profit Loss %",
+    ];
+    const rows = portfolio.holdings.map((holding) => [
+      holding.name,
+      holding.symbol,
+      holding.amount,
+      holding.averageBuyPrice,
+      holding.currentPrice,
+      holding.currentValue,
+      holding.investedValue,
+      holding.profitLoss,
+      holding.profitLossPercentage,
+    ]);
+    const csv = [header, ...rows]
+      .map((row) =>
+        row
+          .map((cell) => `"${String(cell ?? "").replaceAll('"', '""')}"`)
+          .join(",")
+      )
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "cryptotracker-portfolio.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <>
@@ -148,6 +199,24 @@ function Portfolio() {
       (portfolio.holdings.length < 3 ? 20 : 0) +
       Math.abs(summary.profitLossPercentage) * 0.35
   );
+  const allocationChartData = {
+    labels: portfolio.allocation.map((asset) => asset.name),
+    datasets: [
+      {
+        data: portfolio.allocation.map((asset) => asset.value),
+        backgroundColor: portfolio.allocation.map(
+          (_, index) => ALLOCATION_COLORS[index % ALLOCATION_COLORS.length]
+        ),
+        borderWidth: 0,
+      },
+    ],
+  };
+  const bestHolding = [...portfolio.holdings].sort(
+    (a, b) => b.profitLossPercentage - a.profitLossPercentage
+  )[0];
+  const weakestHolding = [...portfolio.holdings].sort(
+    (a, b) => a.profitLossPercentage - b.profitLossPercentage
+  )[0];
 
   return (
     <>
@@ -158,6 +227,9 @@ function Portfolio() {
             <h1>Portfolio</h1>
             <p>Track holdings, live value, allocation, and profit/loss.</p>
           </div>
+          <button className="feature-action" onClick={handleExportCsv}>
+            Export CSV
+          </button>
         </div>
 
         <section className="metric-grid">
@@ -190,6 +262,62 @@ function Portfolio() {
             <strong className={riskScore > 70 ? "negative" : riskScore > 45 ? "" : "positive"}>
               {riskScore.toFixed(0)}/100
             </strong>
+          </div>
+          <div className="metric-card">
+            <span>Best Holding</span>
+            <strong className="positive">
+              {bestHolding
+                ? `${bestHolding.symbol.toUpperCase()} ${bestHolding.profitLossPercentage.toFixed(2)}%`
+                : "-"}
+            </strong>
+          </div>
+          <div className="metric-card">
+            <span>Weakest Holding</span>
+            <strong className="negative">
+              {weakestHolding
+                ? `${weakestHolding.symbol.toUpperCase()} ${weakestHolding.profitLossPercentage.toFixed(2)}%`
+                : "-"}
+            </strong>
+          </div>
+        </section>
+
+        <section className="feature-grid" style={{ marginBottom: "1.25rem" }}>
+          <div className="feature-panel">
+            <h2>Allocation</h2>
+            {portfolio.allocation.length ? (
+              <Doughnut
+                data={allocationChartData}
+                options={{
+                  plugins: {
+                    legend: {
+                      labels: {
+                        color: "var(--white)",
+                      },
+                    },
+                  },
+                }}
+              />
+            ) : (
+              <div className="empty-panel">No allocation data.</div>
+            )}
+          </div>
+          <div className="feature-panel">
+            <h2>Allocation Breakdown</h2>
+            <div className="feature-list">
+              {portfolio.allocation.map((asset) => (
+                <article className="market-card" key={asset.coinId}>
+                  <h3>{asset.name}</h3>
+                  <p>{currency.format(asset.value)}</p>
+                  <div className="allocation-bar">
+                    <span
+                      className="allocation-fill"
+                      style={{ width: `${Math.min(asset.percentage, 100)}%` }}
+                    />
+                  </div>
+                  <p>{asset.percentage.toFixed(2)}%</p>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -306,6 +434,38 @@ function Portfolio() {
                 <div className="empty-panel">No holdings added yet.</div>
               )}
             </div>
+          </div>
+        </section>
+
+        <section className="feature-panel" style={{ marginTop: "1.25rem" }}>
+          <h2>Position Ledger</h2>
+          <div className="table-scroll">
+            <table className="market-table">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th>Amount</th>
+                  <th>Avg Buy</th>
+                  <th>Current</th>
+                  <th>P/L</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {portfolio.holdings.map((holding) => (
+                  <tr key={holding.id}>
+                    <td>{holding.symbol.toUpperCase()} · {holding.name}</td>
+                    <td>{number.format(holding.amount)}</td>
+                    <td>{currency.format(holding.averageBuyPrice)}</td>
+                    <td>{currency.format(holding.currentPrice)}</td>
+                    <td className={holding.profitLoss >= 0 ? "positive" : "negative"}>
+                      {currency.format(holding.profitLoss)}
+                    </td>
+                    <td>{new Date(holding.updatedAt).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       </main>

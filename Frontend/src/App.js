@@ -9,7 +9,12 @@ import Watchlist from "./pages/Watchlist";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import Alerts from "./pages/Alerts";
+import Converter from "./pages/Converter";
+import Discovery from "./pages/Discovery";
+import Exchanges from "./pages/Exchanges";
+import NftMarket from "./pages/NftMarket";
 import Portfolio from "./pages/Portfolio";
+import Screener from "./pages/Screener";
 import SystemStatus from "./pages/SystemStatus";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -86,6 +91,11 @@ function App() {
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/discover" element={<Discovery />} />
+              <Route path="/screener" element={<Screener />} />
+              <Route path="/exchanges" element={<Exchanges />} />
+              <Route path="/nfts" element={<NftMarket />} />
+              <Route path="/converter" element={<Converter />} />
               <Route path="/coin/:id" element={<Coin />} />
               <Route path="/compare" element={<Compare />} />
               <Route

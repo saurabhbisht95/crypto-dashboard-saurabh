@@ -79,6 +79,15 @@ function Header() {
         <Link to="/compare">
           <p className="link">Compare</p>
         </Link>
+        <Link to="/discover">
+          <p className="link">Discover</p>
+        </Link>
+        <Link to="/screener">
+          <p className="link">Screener</p>
+        </Link>
+        <Link to="/converter">
+          <p className="link">Convert</p>
+        </Link>
         {isAuthenticated && (
           <>
             <Link to="/portfolio">

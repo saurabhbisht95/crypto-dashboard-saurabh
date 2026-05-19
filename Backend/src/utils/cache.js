@@ -11,11 +11,15 @@ class MemoryCache {
     }
 
     if (Date.now() > item.expiresAt) {
-      this.store.delete(key);
       return null;
     }
 
     return item.value;
+  }
+
+  getStale(key) {
+    const item = this.store.get(key);
+    return item?.value || null;
   }
 
   set(key, value, ttlMs) {

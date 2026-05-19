@@ -6,7 +6,7 @@ CryptoTracker is now structured as a production-style full-stack application:
 - Express API with versioned routes under `/api/v1`.
 - MongoDB models for users, portfolio holdings, and price alerts.
 - Backend CoinGecko proxy with in-memory caching to reduce rate-limit pressure.
-- Live price polling, market heatmap, market intelligence, and system status APIs.
+- Live price polling, market heatmap, market intelligence, discovery, screener, exchange, NFT, converter, and system status APIs.
 - Recruiter demo login that seeds a watchlist, sample portfolio, and alerts.
 - JWT auth with secure HTTP-only cookies and a bearer-token-compatible middleware.
 
@@ -35,7 +35,10 @@ npm start
 - Auth: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/auth/me`
 - Demo: `POST /api/v1/auth/demo`
 - Market data: `GET /api/v1/market/coins`, `GET /api/v1/market/coins/:coinId`, `GET /api/v1/market/summary`
-- Live market: `GET /api/v1/market/live-prices`, `GET /api/v1/market/heatmap`, `GET /api/v1/market/intelligence`
+- Discovery: `GET /api/v1/market/discovery`, `GET /api/v1/market/screener`, `GET /api/v1/market/categories`, `GET /api/v1/market/chains`
+- Live market: `GET /api/v1/market/live-prices`, `GET /api/v1/market/heatmap`, `GET /api/v1/market/intelligence`, `GET /api/v1/market/convert`
+- Exchanges and NFTs: `GET /api/v1/market/exchanges`, `GET /api/v1/market/nfts`
+- Coin detail: `GET /api/v1/market/coins/:coinId/advanced`
 - Watchlist: `GET /api/v1/watchlist`, `POST /api/v1/watchlist/:coinId`, `DELETE /api/v1/watchlist/:coinId`
 - Portfolio: `GET /api/v1/portfolio`, `POST /api/v1/portfolio/holdings`, `DELETE /api/v1/portfolio/holdings/:holdingId`
 - Alerts: `GET /api/v1/alerts`, `POST /api/v1/alerts`, `PATCH /api/v1/alerts/:alertId/toggle`, `DELETE /api/v1/alerts/:alertId`
@@ -48,3 +51,4 @@ npm start
 - In production, set `CORS_ORIGIN` to your deployed frontend URL.
 - Add `COINGECKO_API_KEY` on the backend only. Do not expose market API keys in React env variables.
 - Tune `MARKET_FETCH_TIMEOUT_MS` if your deployment region needs a longer provider timeout.
+- Add a CoinGecko API key before launch for higher rate limits. The backend serves stale cache, then a small fallback market snapshot, if CoinGecko temporarily rate-limits the public API.

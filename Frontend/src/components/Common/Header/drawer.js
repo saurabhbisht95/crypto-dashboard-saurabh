@@ -71,6 +71,21 @@ export default function TemporaryDrawer() {
           <Link to="/compare" onClick={() => setOpen(false)}>
             <p className="link">Compare</p>
           </Link>
+          <Link to="/discover" onClick={() => setOpen(false)}>
+            <p className="link">Discover</p>
+          </Link>
+          <Link to="/screener" onClick={() => setOpen(false)}>
+            <p className="link">Screener</p>
+          </Link>
+          <Link to="/exchanges" onClick={() => setOpen(false)}>
+            <p className="link">Exchanges</p>
+          </Link>
+          <Link to="/nfts" onClick={() => setOpen(false)}>
+            <p className="link">NFTs</p>
+          </Link>
+          <Link to="/converter" onClick={() => setOpen(false)}>
+            <p className="link">Converter</p>
+          </Link>
           {isAuthenticated && (
             <>
               <Link to="/portfolio" onClick={() => setOpen(false)}>
