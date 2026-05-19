@@ -13,7 +13,7 @@ import { getApiMessage } from "../../services/http";
 const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
 function Login() {
-  const { login } = useAuth();
+  const { demoLogin, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
@@ -56,6 +56,20 @@ function Login() {
       navigate(location.state?.from || "/dashboard", { replace: true });
     } catch (err) {
       toast.error(getApiMessage(err, "Login failed."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setSubmitting(true);
+
+    try {
+      await demoLogin();
+      toast.success("Demo workspace loaded.");
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      toast.error(getApiMessage(err, "Demo login failed."));
     } finally {
       setSubmitting(false);
     }
@@ -124,6 +138,14 @@ function Login() {
                 <FiLogIn size={18} /> {submitting ? "Logging in..." : "Login"}
               </button>
             </form>
+            <button
+              type="button"
+              className="btn-primary btn-secondary-auth"
+              disabled={submitting}
+              onClick={handleDemoLogin}
+            >
+              Try Recruiter Demo
+            </button>
             <p>
               Don't have an account?{" "}
               <Link to="/signup" className="sign-up">

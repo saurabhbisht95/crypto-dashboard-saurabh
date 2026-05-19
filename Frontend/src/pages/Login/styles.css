@@ -164,6 +164,13 @@ body {
   transform: translateY(-2px);
 }
 
+.btn-secondary-auth {
+  margin-top: 0.75rem;
+  background-color: transparent;
+  color: var(--blue);
+  border: 1px solid var(--blue);
+}
+
 .auth-card p {
   margin-top: 1.25rem;
   font-size: 0.9rem;

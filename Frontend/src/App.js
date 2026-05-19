@@ -10,6 +10,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import Alerts from "./pages/Alerts";
 import Portfolio from "./pages/Portfolio";
+import SystemStatus from "./pages/SystemStatus";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useEffect } from "react";
@@ -111,6 +112,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/status" element={<SystemStatus />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

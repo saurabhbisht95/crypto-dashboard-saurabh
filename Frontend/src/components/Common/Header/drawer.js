@@ -9,8 +9,10 @@ import { getStorageValue, setStorageValue } from "../../../functions/storage";
 import { useAuth } from "../../../context/AuthContext";
 
 export default function TemporaryDrawer() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [showAccountActions, setShowAccountActions] = useState(false);
+  const firstName = user?.name?.split(" ")?.[0];
   const [darkMode, setDarkMode] = useState(
     getStorageValue("theme") === "dark" ? true : false
   );
@@ -36,6 +38,7 @@ export default function TemporaryDrawer() {
   const handleLogout = async () => {
     await logout();
     setOpen(false);
+    setShowAccountActions(false);
     toast.success("Logged out.");
   };
 
@@ -53,7 +56,14 @@ export default function TemporaryDrawer() {
       <IconButton onClick={() => setOpen(true)}>
         <MenuRoundedIcon className="link" />
       </IconButton>
-      <Drawer anchor="right" open={open} onClose={() => setOpen(false)}>
+      <Drawer
+        anchor="right"
+        open={open}
+        onClose={() => {
+          setOpen(false);
+          setShowAccountActions(false);
+        }}
+      >
         <div className="drawer-div">
           <Link to="/" onClick={() => setOpen(false)}>
             <p className="link">Home</p>
@@ -78,9 +88,19 @@ export default function TemporaryDrawer() {
             <p className="link">Dashboard</p>
           </Link>
           {isAuthenticated ? (
-            <p className="link" onClick={handleLogout}>
-              Logout
-            </p>
+            <>
+              <p
+                className="link"
+                onClick={() => setShowAccountActions((isVisible) => !isVisible)}
+              >
+                {firstName || "Account"}
+              </p>
+              {showAccountActions && (
+                <p className="link" onClick={handleLogout}>
+                  Logout
+                </p>
+              )}
+            </>
           ) : (
             <Link to="/login" onClick={() => setOpen(false)}>
               <p className="link">Login</p>

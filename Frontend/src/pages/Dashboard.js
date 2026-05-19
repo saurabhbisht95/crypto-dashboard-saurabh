@@ -8,6 +8,9 @@ import PaginationComponent from "../components/Dashboard/Pagination";
 import TopButton from "../components/Common/TopButton";
 import Footer from "../components/Common/Footer/footer";
 import ErrorState from "../components/Common/ErrorState";
+import LiveMarketStrip from "../components/Market/LiveMarketStrip";
+import MarketHeatmap from "../components/Market/MarketHeatmap";
+import MarketIntelligence from "../components/Market/MarketIntelligence";
 import { get100Coins } from "../functions/get100Coins";
 import { getApiErrorMessage } from "../functions/api";
 import { marketService } from "../services/marketService";
@@ -100,6 +103,7 @@ function Dashboard() {
         />
       ) : (
         <>
+          <LiveMarketStrip />
           {summary && (
             <section className="feature-shell" style={{ marginBottom: "1rem" }}>
               <div className="metric-grid">
@@ -141,6 +145,12 @@ function Dashboard() {
               count={pageCount}
               handlePageChange={handlePageChange}
             />
+          )}
+          {!search && (
+            <>
+              <MarketIntelligence />
+              <MarketHeatmap />
+            </>
           )}
         </>
       )}

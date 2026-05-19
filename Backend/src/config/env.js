@@ -30,6 +30,7 @@ export const env = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   coinGeckoApiKey: process.env.COINGECKO_API_KEY || "",
   alertCheckIntervalMs: Number(process.env.ALERT_CHECK_INTERVAL_MS) || 300000,
+  marketFetchTimeoutMs: Number(process.env.MARKET_FETCH_TIMEOUT_MS) || 12000,
 };
 
 export const isProduction = env.nodeEnv === "production";

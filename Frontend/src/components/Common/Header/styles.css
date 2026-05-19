@@ -35,6 +35,66 @@
   transform: all 0.3s;
 }
 
+.account-menu {
+  position: relative;
+}
+
+.header-user-button {
+  appearance: none;
+  max-width: 8rem;
+  min-height: 2.35rem;
+  overflow: hidden;
+  padding: 0.45rem 1rem;
+  border: 1px solid rgba(58, 128, 233, 0.35);
+  border-radius: 999px;
+  background: rgba(58, 128, 233, 0.1);
+  color: var(--white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-user-button:hover,
+.header-user-button:focus-visible {
+  border-color: var(--blue);
+  outline: none;
+}
+
+.account-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 9rem;
+  padding: 0.4rem;
+  border: 1px solid rgba(58, 128, 233, 0.2);
+  border-radius: 8px;
+  background: var(--darkgrey);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.24);
+}
+
+.account-popover button {
+  width: 100%;
+  min-height: 2.35rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.account-popover button:hover,
+.account-popover button:focus-visible {
+  background: rgba(58, 128, 233, 0.12);
+  outline: none;
+}
+
 .drawer-component {
   display: none;
 }

@@ -5,6 +5,7 @@ export const API_BASE_URL =
 
 export const http = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -12,5 +13,9 @@ export const http = axios.create({
 });
 
 export const getApiMessage = (error, fallback = "Something went wrong.") => {
+  if (error?.code === "ECONNABORTED") {
+    return "The request timed out. Please retry in a moment.";
+  }
+
   return error?.response?.data?.message || error?.message || fallback;
 };

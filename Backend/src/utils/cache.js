@@ -28,6 +28,24 @@ class MemoryCache {
   delete(key) {
     this.store.delete(key);
   }
+
+  stats() {
+    const now = Date.now();
+    let activeEntries = 0;
+
+    this.store.forEach((item, key) => {
+      if (now > item.expiresAt) {
+        this.store.delete(key);
+      } else {
+        activeEntries += 1;
+      }
+    });
+
+    return {
+      activeEntries,
+      provider: "memory",
+    };
+  }
 }
 
 export const cache = new MemoryCache();

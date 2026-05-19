@@ -138,6 +138,16 @@ function Portfolio() {
   }
 
   const summary = portfolio.summary;
+  const topAllocation = Math.max(
+    0,
+    ...portfolio.allocation.map((asset) => asset.percentage)
+  );
+  const riskScore = Math.min(
+    100,
+    topAllocation +
+      (portfolio.holdings.length < 3 ? 20 : 0) +
+      Math.abs(summary.profitLossPercentage) * 0.35
+  );
 
   return (
     <>
@@ -173,6 +183,12 @@ function Portfolio() {
               }
             >
               {summary.profitLossPercentage.toFixed(2)}%
+            </strong>
+          </div>
+          <div className="metric-card">
+            <span>Risk Score</span>
+            <strong className={riskScore > 70 ? "negative" : riskScore > 45 ? "" : "positive"}>
+              {riskScore.toFixed(0)}/100
             </strong>
           </div>
         </section>

@@ -13,6 +13,10 @@ import { getCoinData } from "../functions/getCoinData";
 import { getPrices } from "../functions/getPrices";
 import { settingChartData } from "../functions/settingChartData";
 import { settingCoinObject } from "../functions/settingCoinObject";
+import { marketService } from "../services/marketService";
+import "./FeaturePages.css";
+
+const isLivePrice = (price) => Number.isFinite(Number(price));
 
 function Compare() {
   const [allCoins, setAllCoins] = useState([]);
@@ -92,6 +96,72 @@ function Compare() {
     getComparisonData();
   }, [getComparisonData]);
 
+  useEffect(() => {
+    if (!coin1Data?.id || !coin2Data?.id || priceType !== "prices" || error) {
+      return undefined;
+    }
+
+    let isActive = true;
+
+    const appendLivePrices = async () => {
+      try {
+        const data = await marketService.getLivePrices([crypto1, crypto2]);
+        const price1 = data.prices?.[crypto1]?.usd;
+        const price2 = data.prices?.[crypto2]?.usd;
+
+        if (!isActive || !isLivePrice(price1) || !isLivePrice(price2)) return;
+
+        setCoin1Data((currentCoin) => ({
+          ...currentCoin,
+          current_price: price1,
+          price_change_percentage_24h:
+            data.prices?.[crypto1]?.usd_24h_change ??
+            currentCoin.price_change_percentage_24h,
+        }));
+        setCoin2Data((currentCoin) => ({
+          ...currentCoin,
+          current_price: price2,
+          price_change_percentage_24h:
+            data.prices?.[crypto2]?.usd_24h_change ??
+            currentCoin.price_change_percentage_24h,
+        }));
+
+        setChartData((currentChart) => {
+          if (currentChart.datasets?.length < 2) {
+            return currentChart;
+          }
+
+          return {
+            labels: [
+              ...currentChart.labels.slice(-89),
+              new Date().toLocaleTimeString(),
+            ],
+            datasets: [
+              {
+                ...currentChart.datasets[0],
+                data: [...currentChart.datasets[0].data.slice(-89), price1],
+              },
+              {
+                ...currentChart.datasets[1],
+                data: [...currentChart.datasets[1].data.slice(-89), price2],
+              },
+            ],
+          };
+        });
+      } catch {
+        // Keep the current comparison chart if a live tick misses.
+      }
+    };
+
+    appendLivePrices();
+    const intervalId = setInterval(appendLivePrices, 10000);
+
+    return () => {
+      isActive = false;
+      clearInterval(intervalId);
+    };
+  }, [coin1Data?.id, coin2Data?.id, crypto1, crypto2, error, priceType]);
+
   const onCoinChange = (e, isCoin2) => {
     if (isCoin2) {
       const newCrypto2 = e.target.value;
@@ -147,6 +217,11 @@ function Compare() {
               priceType={priceType}
               handlePriceTypeChange={handlePriceTypeChange}
             />
+            {priceType === "prices" && (
+              <p className="feature-muted" style={{ textAlign: "center" }}>
+                Live comparison: fresh backend price ticks append every 10 seconds.
+              </p>
+            )}
             <LineChart chartData={chartData} multiAxis={true} />
           </div>
           <Info title={coin1Data.name} desc={coin1Data.desc} />

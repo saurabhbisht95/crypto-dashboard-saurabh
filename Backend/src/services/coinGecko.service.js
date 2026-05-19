@@ -6,6 +6,7 @@ const BASE_URL = "https://api.coingecko.com/api/v3";
 const MARKET_CACHE_TTL = 60 * 1000;
 const COIN_CACHE_TTL = 2 * 60 * 1000;
 const CHART_CACHE_TTL = 60 * 1000;
+const LIVE_CACHE_TTL = 10 * 1000;
 
 const buildUrl = (path, params = {}) => {
   const url = new URL(`${BASE_URL}${path}`);
@@ -28,25 +29,44 @@ const fetchJson = async (path, params = {}, ttl = MARKET_CACHE_TTL) => {
     return cached;
   }
 
-  const response = await fetch(url, {
-    headers: {
-      accept: "application/json",
-      ...(env.coinGeckoApiKey ? { "x-cg-demo-api-key": env.coinGeckoApiKey } : {}),
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), env.marketFetchTimeoutMs);
 
-  if (!response.ok) {
-    throw new ApiError(
-      response.status,
-      response.status === 429
-        ? "CoinGecko rate limit reached. Please retry shortly."
-        : "Unable to fetch market data."
-    );
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        accept: "application/json",
+        ...(env.coinGeckoApiKey
+          ? { "x-cg-demo-api-key": env.coinGeckoApiKey }
+          : {}),
+      },
+    });
+
+    if (!response.ok) {
+      throw new ApiError(
+        response.status,
+        response.status === 429
+          ? "CoinGecko rate limit reached. Please retry shortly."
+          : "Unable to fetch market data."
+      );
+    }
+
+    const data = await response.json();
+    cache.set(cacheKey, data, ttl);
+    return data;
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new ApiError(
+        504,
+        "Market data provider timed out. Please retry in a moment."
+      );
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const data = await response.json();
-  cache.set(cacheKey, data, ttl);
-  return data;
 };
 
 export const getMarketCoins = ({
@@ -109,6 +129,25 @@ export const getSimplePrices = async (coinIds) => {
       include_24hr_change: true,
     },
     MARKET_CACHE_TTL
+  );
+};
+
+export const getLivePrices = async (coinIds) => {
+  if (!coinIds.length) {
+    return {};
+  }
+
+  return fetchJson(
+    "/simple/price",
+    {
+      ids: coinIds.join(","),
+      vs_currencies: "usd",
+      include_market_cap: true,
+      include_24hr_vol: true,
+      include_24hr_change: true,
+      include_last_updated_at: true,
+    },
+    LIVE_CACHE_TTL
   );
 };
 

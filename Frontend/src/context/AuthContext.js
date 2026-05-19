@@ -36,6 +36,12 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   }, []);
 
+  const demoLogin = useCallback(async () => {
+    const data = await authService.demoLogin();
+    setUser(data.user);
+    return data.user;
+  }, []);
+
   const register = useCallback(async (payload) => {
     const data = await authService.register(payload);
     setUser(data.user);
@@ -76,6 +82,7 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: Boolean(user),
       watchlistIds: user?.watchlist || [],
       login,
+      demoLogin,
       register,
       logout,
       refreshUser,
@@ -84,6 +91,7 @@ export const AuthProvider = ({ children }) => {
     }),
     [
       addToWatchlist,
+      demoLogin,
       loading,
       login,
       logout,

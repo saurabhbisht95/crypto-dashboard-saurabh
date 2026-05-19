@@ -7,6 +7,9 @@ export const authService = {
   login(payload) {
     return http.post("/auth/login", payload).then((res) => res.data.data);
   },
+  demoLogin() {
+    return http.post("/auth/demo").then((res) => res.data.data);
+  },
   logout() {
     return http.post("/auth/logout").then((res) => res.data);
   },

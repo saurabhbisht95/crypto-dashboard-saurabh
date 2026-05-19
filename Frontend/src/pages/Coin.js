@@ -14,6 +14,10 @@ import { getCoinData } from "../functions/getCoinData";
 import { getPrices } from "../functions/getPrices";
 import { settingChartData } from "../functions/settingChartData";
 import { settingCoinObject } from "../functions/settingCoinObject";
+import { marketService } from "../services/marketService";
+import "./FeaturePages.css";
+
+const isLivePrice = (price) => Number.isFinite(Number(price));
 
 function Coin() {
   const { id } = useParams();
@@ -66,6 +70,62 @@ function Coin() {
     }
   }, [getData, id]);
 
+  useEffect(() => {
+    if (!id || !coin.id || priceType !== "prices" || error) {
+      return undefined;
+    }
+
+    let isActive = true;
+
+    const appendLivePrice = async () => {
+      try {
+        const data = await marketService.getLivePrices([id]);
+        const livePrice = data.prices?.[id]?.usd;
+
+        if (!isActive || !isLivePrice(livePrice)) return;
+
+        setCoin((currentCoin) => ({
+          ...currentCoin,
+          current_price: livePrice,
+          price_change_percentage_24h:
+            data.prices?.[id]?.usd_24h_change ??
+            currentCoin.price_change_percentage_24h,
+        }));
+
+        setChartData((currentChart) => {
+          const dataset = currentChart.datasets?.[0];
+
+          if (!dataset?.data?.length) {
+            return currentChart;
+          }
+
+          return {
+            labels: [
+              ...currentChart.labels.slice(-89),
+              new Date().toLocaleTimeString(),
+            ],
+            datasets: [
+              {
+                ...dataset,
+                data: [...dataset.data.slice(-89), livePrice],
+              },
+            ],
+          };
+        });
+      } catch {
+        // Keep the historical chart if a live tick misses.
+      }
+    };
+
+    appendLivePrice();
+    const intervalId = setInterval(appendLivePrice, 10000);
+
+    return () => {
+      isActive = false;
+      clearInterval(intervalId);
+    };
+  }, [coin.id, error, id, priceType]);
+
   const handleDaysChange = (event) => {
     const newDays = Number(event.target.value);
     if (!newDays) return;
@@ -91,6 +151,11 @@ function Coin() {
               priceType={priceType}
               handlePriceTypeChange={handlePriceTypeChange}
             />
+            {priceType === "prices" && (
+              <p className="feature-muted" style={{ textAlign: "center" }}>
+                Live mode: appending fresh backend price ticks every 10 seconds.
+              </p>
+            )}
             <LineChart chartData={chartData} />
           </div>
           <Info title={coin.name} desc={coin.desc} />

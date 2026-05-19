@@ -15,4 +15,21 @@ export const marketService = {
   getSummary() {
     return http.get("/market/summary").then((res) => res.data.data);
   },
+  getLivePrices(ids) {
+    return http
+      .get("/market/live-prices", {
+        params: {
+          ids: ids.join(","),
+        },
+      })
+      .then((res) => res.data.data);
+  },
+  getHeatmap(limit = 50) {
+    return http
+      .get("/market/heatmap", { params: { limit } })
+      .then((res) => res.data.data.heatmap);
+  },
+  getIntelligence() {
+    return http.get("/market/intelligence").then((res) => res.data.data);
+  },
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "../Button";
 import TemporaryDrawer from "./drawer";
@@ -10,6 +10,9 @@ import { useAuth } from "../../../context/AuthContext";
 
 function Header() {
   const { isAuthenticated, logout, user } = useAuth();
+  const firstName = user?.name?.split(" ")?.[0];
+  const accountMenuRef = useRef(null);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(
     getStorageValue("theme") === "dark" ? true : false
   );
@@ -20,6 +23,21 @@ function Header() {
     } else {
       setLight();
     }
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target)
+      ) {
+        setAccountMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   const changeMode = () => {
@@ -34,6 +52,7 @@ function Header() {
 
   const handleLogout = async () => {
     await logout();
+    setAccountMenuOpen(false);
     toast.success("Logged out.");
   };
 
@@ -77,7 +96,24 @@ function Header() {
           <Button text={"dashboard"} />
         </Link>
         {isAuthenticated ? (
-          <Button text={user?.name?.split(" ")[0] || "logout"} onClick={handleLogout} />
+          <div className="account-menu" ref={accountMenuRef}>
+            <button
+              type="button"
+              className="header-user-button"
+              onClick={() => setAccountMenuOpen((isOpen) => !isOpen)}
+              aria-expanded={accountMenuOpen}
+              aria-haspopup="menu"
+            >
+              {firstName || "Account"}
+            </button>
+            {accountMenuOpen && (
+              <div className="account-popover" role="menu">
+                <button type="button" onClick={handleLogout} role="menuitem">
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <Link to="/login">
             <Button text={"login"} />
