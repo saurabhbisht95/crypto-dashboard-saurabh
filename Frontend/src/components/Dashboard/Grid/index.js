@@ -1,22 +1,55 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./styles.css";
 import TrendingDownRoundedIcon from "@mui/icons-material/TrendingDownRounded";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import { motion } from "framer-motion";
 import StarOutlineIcon from "@mui/icons-material/StarOutline";
-import { saveItemToWatchlist } from "../../../functions/saveItemToWatchlist";
 import StarIcon from "@mui/icons-material/Star";
-import { removeItemToWatchlist } from "../../../functions/removeItemToWatchlist";
-import { getJsonStorageValue } from "../../../functions/storage";
+import { toast } from "react-toastify";
+import { useAuth } from "../../../context/AuthContext";
+import { getApiMessage } from "../../../services/http";
 
 function Grid({ coin, delay }) {
-  const watchlist = getJsonStorageValue("watchlist", []);
-  const [isCoinAdded, setIsCoinAdded] = useState(watchlist?.includes(coin.id));
+  const navigate = useNavigate();
+  const {
+    addToWatchlist,
+    isAuthenticated,
+    removeFromWatchlist,
+    watchlistIds,
+  } = useAuth();
+  const [isCoinAdded, setIsCoinAdded] = useState(watchlistIds.includes(coin.id));
   const priceChange = coin.price_change_percentage_24h || 0;
   const currentPrice = coin.current_price || 0;
   const totalVolume = coin.total_volume || 0;
   const marketCap = coin.market_cap || 0;
+
+  useEffect(() => {
+    setIsCoinAdded(watchlistIds.includes(coin.id));
+  }, [coin.id, watchlistIds]);
+
+  const handleWatchlistClick = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.info("Login to save coins to your watchlist.");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      if (isCoinAdded) {
+        await removeFromWatchlist(coin.id);
+        toast.success(`${coin.name} removed from watchlist.`);
+      } else {
+        await addToWatchlist(coin.id);
+        toast.success(`${coin.name} added to watchlist.`);
+      }
+    } catch (err) {
+      toast.error(getApiMessage(err, "Watchlist could not be updated."));
+    }
+  };
 
   return (
     <Link to={`/coin/${coin.id}`}>
@@ -37,16 +70,7 @@ function Grid({ coin, delay }) {
               className={`watchlist-icon ${
                 priceChange < 0 && "watchlist-icon-red"
               }`}
-              onClick={(e) => {
-                if (isCoinAdded) {
-                  // remove coin
-
-                  removeItemToWatchlist(e, coin.id, setIsCoinAdded);
-                } else {
-                  setIsCoinAdded(true);
-                  saveItemToWatchlist(e, coin.id);
-                }
-              }}
+              onClick={handleWatchlistClick}
             >
               {isCoinAdded ? <StarIcon /> : <StarOutlineIcon />}
             </div>

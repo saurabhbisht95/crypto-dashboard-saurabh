@@ -6,8 +6,10 @@ import { IconButton } from "@mui/material";
 import Switch from "@mui/material/Switch";
 import { toast } from "react-toastify";
 import { getStorageValue, setStorageValue } from "../../../functions/storage";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function TemporaryDrawer() {
+  const { isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(
     getStorageValue("theme") === "dark" ? true : false
@@ -29,6 +31,12 @@ export default function TemporaryDrawer() {
     }
     setDarkMode(!darkMode);
     toast.success("Theme Changed!");
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setOpen(false);
+    toast.success("Logged out.");
   };
 
   const setDark = () => {
@@ -53,12 +61,31 @@ export default function TemporaryDrawer() {
           <Link to="/compare" onClick={() => setOpen(false)}>
             <p className="link">Compare</p>
           </Link>
-          <Link to="/watchlist" onClick={() => setOpen(false)}>
-            <p className="link">Watchlist</p>
-          </Link>
+          {isAuthenticated && (
+            <>
+              <Link to="/portfolio" onClick={() => setOpen(false)}>
+                <p className="link">Portfolio</p>
+              </Link>
+              <Link to="/alerts" onClick={() => setOpen(false)}>
+                <p className="link">Alerts</p>
+              </Link>
+              <Link to="/watchlist" onClick={() => setOpen(false)}>
+                <p className="link">Watchlist</p>
+              </Link>
+            </>
+          )}
           <Link to="/dashboard" onClick={() => setOpen(false)}>
             <p className="link">Dashboard</p>
           </Link>
+          {isAuthenticated ? (
+            <p className="link" onClick={handleLogout}>
+              Logout
+            </p>
+          ) : (
+            <Link to="/login" onClick={() => setOpen(false)}>
+              <p className="link">Login</p>
+            </Link>
+          )}
           <Switch checked={darkMode} onClick={() => changeMode()} />
         </div>
       </Drawer>

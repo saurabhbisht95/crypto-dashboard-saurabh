@@ -1,18 +1,24 @@
 import React, { useState } from "react";
 import "./styles.css";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiLogIn } from "react-icons/fi";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 
 import gradient from "../../assets/gradient.png";
 import iphone from "../../assets/iphone.png";
+import { useAuth } from "../../context/AuthContext";
+import { getApiMessage } from "../../services/http";
 
 const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
 function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
-  const [status, setStatus] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -20,7 +26,7 @@ function Login() {
     setErrors((currentErrors) => ({ ...currentErrors, [name]: "" }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const nextErrors = {};
@@ -36,13 +42,23 @@ function Login() {
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length) {
-      setStatus("");
       return;
     }
 
-    setStatus(
-      "Authentication is not connected to a secure backend yet. Your login details were not sent or stored."
-    );
+    setSubmitting(true);
+
+    try {
+      await login({
+        email: form.email.trim(),
+        password: form.password,
+      });
+      toast.success("Logged in successfully.");
+      navigate(location.state?.from || "/dashboard", { replace: true });
+    } catch (err) {
+      toast.error(getApiMessage(err, "Login failed."));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -104,16 +120,10 @@ function Login() {
                   Forgot Password?
                 </Link>
               </div>
-              <button type="submit" className="btn-primary">
-                <FiLogIn size={18} /> Login
+              <button type="submit" className="btn-primary" disabled={submitting}>
+                <FiLogIn size={18} /> {submitting ? "Logging in..." : "Login"}
               </button>
             </form>
-            {status && (
-              <div className="auth-alert">
-                <p>{status}</p>
-                <Link to="/dashboard">Continue to Dashboard</Link>
-              </div>
-            )}
             <p>
               Don't have an account?{" "}
               <Link to="/signup" className="sign-up">

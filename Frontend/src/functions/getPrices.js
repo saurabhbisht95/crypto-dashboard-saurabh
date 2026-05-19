@@ -1,16 +1,7 @@
-import { fetchCoinGecko } from "./api";
+import { marketService } from "../services/marketService";
 
-export const getPrices = async (id, days, priceType, options = {}) => {
-  const data = await fetchCoinGecko(`/coins/${id}/market_chart`, {
-    params: {
-      vs_currency: "usd",
-      days,
-      interval: "daily",
-    },
-    cacheKey: `coin-${id}-market-chart-${days}`,
-    cacheTtl: 60 * 1000,
-    ...options,
-  });
+export const getPrices = async (id, days, priceType) => {
+  const data = await marketService.getCoinChart(id, { days });
 
   if (priceType === "market_caps") {
     return data.market_caps || [];

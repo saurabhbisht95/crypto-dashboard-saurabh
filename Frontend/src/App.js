@@ -8,11 +8,15 @@ import Home from "./pages/Home";
 import Watchlist from "./pages/Watchlist";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
+import Alerts from "./pages/Alerts";
+import Portfolio from "./pages/Portfolio";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useEffect } from "react";
 import Login from "./pages/Login/Login";
 import Signup from "./pages/Signup/Signup";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/Common/ProtectedRoute";
 
 function App() {
   const theme = createTheme({
@@ -74,17 +78,42 @@ function App() {
       <ToastContainer />
       <ThemeProvider theme={theme}>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/coin/:id" element={<Coin />} />
-            <Route path="/compare" element={<Compare />} />
-            <Route path="/watchlist" element={<Watchlist />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/coin/:id" element={<Coin />} />
+              <Route path="/compare" element={<Compare />} />
+              <Route
+                path="/watchlist"
+                element={
+                  <ProtectedRoute>
+                    <Watchlist />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/portfolio"
+                element={
+                  <ProtectedRoute>
+                    <Portfolio />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/alerts"
+                element={
+                  <ProtectedRoute>
+                    <Alerts />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>
     </div>

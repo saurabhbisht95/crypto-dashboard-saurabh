@@ -6,8 +6,10 @@ import "./styles.css";
 import Switch from "@mui/material/Switch";
 import { toast } from "react-toastify";
 import { getStorageValue, setStorageValue } from "../../../functions/storage";
+import { useAuth } from "../../../context/AuthContext";
 
 function Header() {
+  const { isAuthenticated, logout, user } = useAuth();
   const [darkMode, setDarkMode] = useState(
     getStorageValue("theme") === "dark" ? true : false
   );
@@ -28,6 +30,11 @@ function Header() {
     }
     setDarkMode(!darkMode);
     toast.success("Theme Changed!");
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success("Logged out.");
   };
 
   const setDark = () => {
@@ -53,15 +60,29 @@ function Header() {
         <Link to="/compare">
           <p className="link">Compare</p>
         </Link>
-        <Link to="/watchlist">
-          <p className="link">Watchlist</p>
-        </Link>
+        {isAuthenticated && (
+          <>
+            <Link to="/portfolio">
+              <p className="link">Portfolio</p>
+            </Link>
+            <Link to="/alerts">
+              <p className="link">Alerts</p>
+            </Link>
+            <Link to="/watchlist">
+              <p className="link">Watchlist</p>
+            </Link>
+          </>
+        )}
         <Link to="/dashboard">
           <Button text={"dashboard"} />
         </Link>
-        <Link to="/login">
-          <Button text={"login"} />
-        </Link>
+        {isAuthenticated ? (
+          <Button text={user?.name?.split(" ")[0] || "logout"} onClick={handleLogout} />
+        ) : (
+          <Link to="/login">
+            <Button text={"login"} />
+          </Link>
+        )}
       </div>
       <div className="drawer-component">
         <TemporaryDrawer />

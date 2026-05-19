@@ -5,19 +5,12 @@ import ErrorState from "../components/Common/ErrorState";
 import Header from "../components/Common/Header";
 import Loader from "../components/Common/Loader";
 import TabsComponent from "../components/Dashboard/Tabs";
-import { getApiErrorMessage } from "../functions/api";
-import { get100Coins } from "../functions/get100Coins";
-import { getJsonStorageValue } from "../functions/storage";
-
-const getStoredWatchlist = () => {
-  const watchlist = getJsonStorageValue("watchlist", []);
-  return Array.isArray(watchlist) ? watchlist : [];
-};
+import { getApiMessage } from "../services/http";
+import { watchlistService } from "../services/watchlistService";
 
 function Watchlist() {
-  const [watchlist] = useState(getStoredWatchlist);
   const [coins, setCoins] = useState([]);
-  const [loading, setLoading] = useState(Boolean(watchlist.length));
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const getData = useCallback(async () => {
@@ -25,22 +18,18 @@ function Watchlist() {
     setError("");
 
     try {
-      const allCoins = await get100Coins();
-      if (allCoins) {
-        setCoins(allCoins.filter((coin) => watchlist.includes(coin.id)));
-      }
+      const watchlist = await watchlistService.getWatchlist();
+      setCoins(watchlist.coins);
     } catch (err) {
-      setError(getApiErrorMessage(err));
+      setError(getApiMessage(err, "Watchlist could not be loaded."));
     } finally {
       setLoading(false);
     }
-  }, [watchlist]);
+  }, []);
 
   useEffect(() => {
-    if (watchlist.length) {
-      getData();
-    }
-  }, [getData, watchlist.length]);
+    getData();
+  }, [getData]);
 
   return (
     <div>
@@ -53,7 +42,7 @@ function Watchlist() {
           message={error}
           onAction={getData}
         />
-      ) : watchlist.length > 0 ? (
+      ) : coins.length > 0 ? (
         <TabsComponent coins={coins} />
       ) : (
         <div>

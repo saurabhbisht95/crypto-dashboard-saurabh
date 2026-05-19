@@ -1,18 +1,23 @@
 import React, { useState } from "react";
 import "../Login/styles.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FiUserPlus } from "react-icons/fi";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 
 import gradient from "../../assets/gradient.png";
 import iphone from "../../assets/iphone.png";
+import { useAuth } from "../../context/AuthContext";
+import { getApiMessage } from "../../services/http";
 
 const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
 function Signup() {
+  const { register } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [errors, setErrors] = useState({});
-  const [status, setStatus] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -20,7 +25,7 @@ function Signup() {
     setErrors((currentErrors) => ({ ...currentErrors, [name]: "" }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const nextErrors = {};
@@ -40,13 +45,24 @@ function Signup() {
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length) {
-      setStatus("");
       return;
     }
 
-    setStatus(
-      "Signup needs a secure backend before real accounts can be created. Your password was not stored."
-    );
+    setSubmitting(true);
+
+    try {
+      await register({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+      });
+      toast.success("Account created.");
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      toast.error(getApiMessage(err, "Signup failed."));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -116,16 +132,10 @@ function Signup() {
                 <span className="auth-error">{errors.password}</span>
               )}
 
-              <button type="submit" className="btn-primary">
-                <FiUserPlus size={18} /> Sign Up
+              <button type="submit" className="btn-primary" disabled={submitting}>
+                <FiUserPlus size={18} /> {submitting ? "Creating..." : "Sign Up"}
               </button>
             </form>
-            {status && (
-              <div className="auth-alert">
-                <p>{status}</p>
-                <Link to="/dashboard">Continue to Dashboard</Link>
-              </div>
-            )}
             <p>
               Already have an account?{" "}
               <Link to="/login" className="sign-up">
