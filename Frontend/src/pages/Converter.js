@@ -9,6 +9,46 @@ import "./FeaturePages.css";
 import "./MarketPages.css";
 
 const FIAT_OPTIONS = ["usd", "inr", "eur", "gbp", "jpy", "aud", "cad", "sgd"];
+const FIAT_CURRENCY_CODES = new Set(FIAT_OPTIONS);
+
+const currencyLocales = {
+  usd: "en-US",
+  inr: "en-IN",
+  eur: "de-DE",
+  gbp: "en-GB",
+  jpy: "ja-JP",
+  aud: "en-AU",
+  cad: "en-CA",
+  sgd: "en-SG",
+};
+
+const getCurrencyFormatter = (currencyCode) =>
+  new Intl.NumberFormat(currencyLocales[currencyCode] || "en-US", {
+    style: "currency",
+    currency: currencyCode.toUpperCase(),
+    maximumFractionDigits: currencyCode === "jpy" ? 0 : 2,
+  });
+
+const formatConvertedValue = (value, target) => {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) return "-";
+
+  if (FIAT_CURRENCY_CODES.has(target)) {
+    return getCurrencyFormatter(target).format(number);
+  }
+
+  return `${preciseNumber.format(number)} ${target.toUpperCase()}`;
+};
+
+const getAssetLabel = (assetId, coins) => {
+  if (FIAT_CURRENCY_CODES.has(assetId)) {
+    return assetId.toUpperCase();
+  }
+
+  const coin = coins.find((item) => item.id === assetId);
+  return coin ? coin.symbol.toUpperCase() : assetId.toUpperCase();
+};
 
 function Converter() {
   const [coins, setCoins] = useState([]);
@@ -34,7 +74,12 @@ function Converter() {
   );
 
   const convert = useCallback(async () => {
+    if (!form.amount || Number(form.amount) <= 0 || !form.from || !form.to) {
+      return;
+    }
+
     setConverting(true);
+    setError("");
 
     try {
       setResult(await marketService.convert(form));
@@ -44,6 +89,16 @@ function Converter() {
       setConverting(false);
     }
   }, [form]);
+
+  useEffect(() => {
+    if (loading) return undefined;
+
+    const timeoutId = setTimeout(() => {
+      convert();
+    }, 450);
+
+    return () => clearTimeout(timeoutId);
+  }, [convert, loading]);
 
   useEffect(() => {
     const loadCoins = async () => {
@@ -93,6 +148,12 @@ function Converter() {
     );
   }
 
+  const resultMatchesForm =
+    result?.from === form.from &&
+    result?.to === form.to &&
+    Number(result?.amount) === Number(form.amount);
+  const displayResult = resultMatchesForm ? result : null;
+
   return (
     <>
       <Header />
@@ -121,9 +182,9 @@ function Converter() {
                   step="any"
                   name="amount"
                   value={form.amount}
-                  onChange={handleChange}
-                />
-              </label>
+                onChange={handleChange}
+              />
+            </label>
               <label>
                 From
                 <select name="from" value={form.from} onChange={handleChange}>
@@ -151,12 +212,26 @@ function Converter() {
           </div>
 
           <div className="feature-panel converter-result">
-            <span className="feature-muted">Converted Value</span>
-            <strong>{result ? preciseNumber.format(result.value) : "-"}</strong>
+            <span className="feature-muted">
+              {converting ? "Updating live rate..." : "Converted Value"}
+            </span>
+            <strong>
+              {displayResult
+                ? formatConvertedValue(displayResult.value, displayResult.to)
+                : "-"}
+            </strong>
             <p className="feature-muted">
-              1 {form.from.toUpperCase()} = {result ? preciseNumber.format(result.rate) : "-"}{" "}
-              {form.to.toUpperCase()}
+              1 {getAssetLabel(displayResult?.from || form.from, coins)} ={" "}
+              {displayResult
+                ? formatConvertedValue(displayResult.rate, displayResult.to)
+                : "-"}
             </p>
+            {displayResult?.updatedAt && (
+              <p className="feature-muted">
+                Live backend rate checked at{" "}
+                {new Date(displayResult.updatedAt).toLocaleTimeString()}
+              </p>
+            )}
           </div>
         </section>
       </main>

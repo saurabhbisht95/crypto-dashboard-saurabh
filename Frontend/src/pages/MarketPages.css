@@ -105,8 +105,15 @@
 .screener-controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  align-items: end;
   gap: 0.8rem;
   margin-bottom: 1rem;
+}
+
+.screener-controls button {
+  width: auto;
+  min-width: 132px;
+  align-self: end;
 }
 
 .converter-grid {
@@ -199,5 +206,11 @@
 @media (max-width: 820px) {
   .converter-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .screener-controls button {
+    width: 100%;
   }
 }

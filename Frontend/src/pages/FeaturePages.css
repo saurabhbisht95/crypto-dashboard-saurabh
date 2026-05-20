@@ -69,6 +69,25 @@
   font-size: 1.15rem;
 }
 
+.section-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.section-toolbar h2 {
+  margin: 0;
+}
+
+.section-toolbar span {
+  color: var(--grey);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .feature-form {
   display: grid;
   gap: 0.85rem;
@@ -219,6 +238,11 @@
   color: var(--grey);
 }
 
+.feature-panel .pagination-div,
+.feature-shell > .pagination-div {
+  margin: 1.5rem 0 0;
+}
+
 @media (max-width: 960px) {
   .metric-grid,
   .feature-grid {
@@ -241,5 +265,10 @@
   .feature-list-item > .feature-list {
     align-items: stretch;
     min-width: 0;
+  }
+
+  .section-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

@@ -383,6 +383,7 @@ export const convertCrypto = asyncHandler(async (req, res) => {
         rate,
         value: amount * rate,
         prices,
+        updatedAt: new Date().toISOString(),
       })
     );
   }
@@ -400,6 +401,7 @@ export const convertCrypto = asyncHandler(async (req, res) => {
       rate,
       value: amount * rate,
       prices,
+      updatedAt: new Date().toISOString(),
     })
   );
 });

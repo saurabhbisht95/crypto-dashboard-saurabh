@@ -3,23 +3,29 @@ import { cache } from "../utils/cache.js";
 import { env } from "../config/env.js";
 
 const BASE_URL = "https://api.coingecko.com/api/v3";
-const MARKET_CACHE_TTL = 60 * 1000;
-const COIN_CACHE_TTL = 2 * 60 * 1000;
-const CHART_CACHE_TTL = 60 * 1000;
-const LIVE_CACHE_TTL = 10 * 1000;
-const DISCOVERY_CACHE_TTL = 10 * 60 * 1000;
-const EXTENDED_CACHE_TTL = 5 * 60 * 1000;
+const MARKET_CACHE_TTL = 5 * 60 * 1000;
+const COIN_CACHE_TTL = 10 * 60 * 1000;
+const CHART_CACHE_TTL = 10 * 60 * 1000;
+const LIVE_CACHE_TTL = 30 * 1000;
+const DISCOVERY_CACHE_TTL = 20 * 60 * 1000;
+const EXTENDED_CACHE_TTL = 20 * 60 * 1000;
+const FALLBACK_CACHE_TTL = 60 * 1000;
 
-const POPULAR_NFT_IDS = [
-  "pudgy-penguins",
-  "cryptopunks",
-  "bored-ape-yacht-club",
-  "mutant-ape-yacht-club",
-  "azuki",
-  "milady-maker",
-  "doodles-official",
-  "moonbirds",
-];
+const pendingRequests = new Map();
+let nextProviderRequestAt = 0;
+
+const FIAT_USD_RATES = {
+  usd: 1,
+  eur: 0.86,
+  gbp: 0.75,
+  inr: 83.2,
+  jpy: 156,
+  cad: 1.37,
+  aud: 1.51,
+  sgd: 1.3,
+  aed: 3.67,
+  brl: 5.05,
+};
 
 const FALLBACK_MARKET_COINS = [
   {
@@ -164,12 +170,341 @@ const fallbackSimplePrices = (params = {}) => {
     if (!coin) return prices;
 
     prices[id] = vsCurrencies.reduce((values, currencyCode) => {
-      values[currencyCode] = currencyCode === "usd" ? coin.current_price : 0;
+      const usdRate = FIAT_USD_RATES[currencyCode] || 0;
+      values[currencyCode] = usdRate ? coin.current_price * usdRate : 0;
       return values;
     }, {});
     prices[id].usd_24h_change = coin.price_change_percentage_24h;
     return prices;
   }, {});
+};
+
+const fallbackCategories = () => [
+  {
+    id: "smart-contract-platform",
+    name: "Smart Contract Platform",
+    market_cap: 2200000000000,
+    volume_24h: 60000000000,
+    market_cap_change_24h: -0.9,
+    top_3_coins: FALLBACK_MARKET_COINS.slice(0, 3).map((coin) => coin.image),
+  },
+  {
+    id: "stablecoins",
+    name: "Stablecoins",
+    market_cap: 318000000000,
+    volume_24h: 70000000000,
+    market_cap_change_24h: 0.05,
+    top_3_coins: FALLBACK_MARKET_COINS.slice(2, 5).map((coin) => coin.image),
+  },
+  {
+    id: "meme-token",
+    name: "Meme",
+    market_cap: 65000000000,
+    volume_24h: 4500000000,
+    market_cap_change_24h: 1.2,
+    top_3_coins: FALLBACK_MARKET_COINS.slice(5, 8).map((coin) => coin.image),
+  },
+];
+
+const fallbackTrending = () => ({
+  coins: FALLBACK_MARKET_COINS.slice(0, 7).map((coin) => ({
+    item: {
+      id: coin.id,
+      name: coin.name,
+      symbol: coin.symbol,
+      market_cap_rank: coin.market_cap_rank,
+      thumb: coin.image,
+      small: coin.image,
+      large: coin.image,
+      data: {
+        price: coin.current_price,
+        price_change_percentage_24h: {
+          usd: coin.price_change_percentage_24h,
+        },
+        market_cap: `$${coin.market_cap.toLocaleString("en-US")}`,
+        total_volume: `$${coin.total_volume.toLocaleString("en-US")}`,
+      },
+    },
+  })),
+  nfts: [],
+  categories: [],
+});
+
+const fallbackAssetPlatforms = () => [
+  { id: "ethereum", name: "Ethereum", shortname: "ETH" },
+  { id: "solana", name: "Solana", shortname: "SOL" },
+  { id: "polygon-pos", name: "Polygon POS", shortname: "MATIC" },
+  { id: "arbitrum-one", name: "Arbitrum One", shortname: "ARB" },
+  { id: "base", name: "Base", shortname: "BASE" },
+];
+
+const fallbackExchanges = () => [
+  {
+    id: "coinbase",
+    name: "Coinbase Exchange",
+    image: "",
+    country: "United States",
+    year_established: 2012,
+    trust_score: 10,
+    trust_score_rank: 1,
+    trade_volume_24h_btc: 17600,
+    url: "https://www.coinbase.com/",
+    has_trading_incentive: false,
+  },
+  {
+    id: "binance",
+    name: "Binance",
+    image: "",
+    country: "Global",
+    year_established: 2017,
+    trust_score: 10,
+    trust_score_rank: 2,
+    trade_volume_24h_btc: 100000,
+    url: "https://www.binance.com/",
+    has_trading_incentive: false,
+  },
+  {
+    id: "kraken",
+    name: "Kraken",
+    image: "",
+    country: "United States",
+    year_established: 2011,
+    trust_score: 10,
+    trust_score_rank: 3,
+    trade_volume_24h_btc: 12000,
+    url: "https://www.kraken.com/",
+    has_trading_incentive: false,
+  },
+];
+
+const FALLBACK_NFT_COLLECTIONS = [
+  {
+    id: "pudgy-penguins",
+    name: "Pudgy Penguins",
+    symbol: "PPG",
+    floorPriceUsd: 42000,
+    floorPriceNative: 12.4,
+    marketCapUsd: 370000000,
+    volume24hUsd: 7200000,
+    change24h: 1.8,
+  },
+  {
+    id: "cryptopunks",
+    name: "CryptoPunks",
+    symbol: "PUNK",
+    floorPriceUsd: 126000,
+    floorPriceNative: 38.2,
+    marketCapUsd: 1250000000,
+    volume24hUsd: 11500000,
+    change24h: -0.7,
+  },
+  {
+    id: "bored-ape-yacht-club",
+    name: "Bored Ape Yacht Club",
+    symbol: "BAYC",
+    floorPriceUsd: 28500,
+    floorPriceNative: 8.7,
+    marketCapUsd: 284000000,
+    volume24hUsd: 3900000,
+    change24h: 0.4,
+  },
+  {
+    id: "azuki",
+    name: "Azuki",
+    symbol: "AZUKI",
+    floorPriceUsd: 11200,
+    floorPriceNative: 3.4,
+    marketCapUsd: 112000000,
+    volume24hUsd: 2100000,
+    change24h: 2.2,
+  },
+];
+
+const findFallbackCoin = (coinId) =>
+  FALLBACK_MARKET_COINS.find((coin) => coin.id === coinId) ||
+  FALLBACK_MARKET_COINS.find((coin) => coin.symbol === coinId);
+
+const fallbackCoinDetails = (coinId) => {
+  const coin = findFallbackCoin(coinId);
+
+  if (!coin) return null;
+
+  return {
+    id: coin.id,
+    symbol: coin.symbol,
+    name: coin.name,
+    image: {
+      thumb: coin.image,
+      small: coin.image,
+      large: coin.image,
+    },
+    description: {
+      en: `${coin.name} market data is being served from the backend fallback snapshot while the live provider recovers.`,
+    },
+    categories: [],
+    genesis_date: null,
+    links: {
+      homepage: [],
+      blockchain_site: [],
+      subreddit_url: "",
+      repos_url: { github: [] },
+    },
+    community_data: {
+      reddit_subscribers: 0,
+    },
+    developer_data: {
+      forks: 0,
+      stars: 0,
+      commit_count_4_weeks: 0,
+    },
+    market_data: {
+      current_price: { usd: coin.current_price },
+      market_cap: { usd: coin.market_cap },
+      total_volume: { usd: coin.total_volume },
+      fully_diluted_valuation: { usd: coin.fully_diluted_valuation },
+      high_24h: { usd: coin.current_price * 1.02 },
+      low_24h: { usd: coin.current_price * 0.98 },
+      price_change_24h:
+        (coin.current_price * coin.price_change_percentage_24h) / 100,
+      price_change_percentage_24h: coin.price_change_percentage_24h,
+      market_cap_change_24h:
+        (coin.market_cap * coin.price_change_percentage_24h) / 100,
+      market_cap_change_percentage_24h: coin.price_change_percentage_24h,
+      circulating_supply: 0,
+      total_supply: 0,
+      max_supply: null,
+      ath: { usd: coin.current_price * 2 },
+      ath_change_percentage: { usd: -50 },
+      atl: { usd: coin.current_price * 0.01 },
+      atl_change_percentage: { usd: 9900 },
+    },
+    tickers: [
+      {
+        base: coin.symbol.toUpperCase(),
+        target: "USD",
+        market: { name: "Backend Fallback" },
+        last: coin.current_price,
+        volume: coin.total_volume,
+        trust_score: "green",
+        trade_url: "",
+      },
+    ],
+    fallback: true,
+  };
+};
+
+const getFallbackPrecision = (price) => (price >= 1 ? 2 : 6);
+
+const fallbackMarketChart = (coinId, days = 30) => {
+  const coin = findFallbackCoin(coinId);
+
+  if (!coin) return null;
+
+  const requestedDays = Math.max(Number(days) || 30, 1);
+  const points = Math.min(Math.max(requestedDays, 7), 90);
+  const totalMs = requestedDays * 24 * 60 * 60 * 1000;
+  const stepMs = totalMs / Math.max(points - 1, 1);
+  const startAt = Date.now() - totalMs;
+  const supply = coin.current_price > 0 ? coin.market_cap / coin.current_price : 0;
+  const precision = getFallbackPrecision(coin.current_price);
+
+  const prices = Array.from({ length: points }, (_, index) => {
+    const progress = points > 1 ? index / (points - 1) : 1;
+    const wave = 1 + Math.sin(index * 0.72) * 0.018 + Math.cos(index * 0.23) * 0.012;
+    const trend = 1 + ((progress - 1) * coin.price_change_percentage_24h) / 100;
+    const value = Number((coin.current_price * wave * trend).toFixed(precision));
+
+    return [Math.round(startAt + stepMs * index), Math.max(value, 0)];
+  });
+
+  return {
+    prices,
+    market_caps: prices.map(([timestamp, price]) => [timestamp, price * supply]),
+    total_volumes: prices.map(([timestamp], index) => [
+      timestamp,
+      coin.total_volume * (1 + Math.sin(index * 0.5) * 0.08),
+    ]),
+    fallback: true,
+  };
+};
+
+const fallbackOhlc = (coinId, days = 30) => {
+  const chart = fallbackMarketChart(coinId, days);
+
+  if (!chart) return null;
+
+  return chart.prices.map(([timestamp, close], index, prices) => {
+    const open = index === 0 ? close * 0.995 : prices[index - 1][1];
+    const high = Math.max(open, close) * 1.01;
+    const low = Math.min(open, close) * 0.99;
+
+    return [timestamp, open, high, low, close];
+  });
+};
+
+const fallbackNewCoins = () =>
+  FALLBACK_MARKET_COINS.map((coin, index) => ({
+    id: coin.id,
+    symbol: coin.symbol,
+    name: coin.name,
+    large: coin.image,
+    small: coin.image,
+    thumb: coin.image,
+    activated_at: new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString(),
+  }));
+
+const toNftPayload = (collection) => ({
+  id: collection.id,
+  name: collection.name,
+  symbol: collection.symbol,
+  image: { small: "", small_2x: "", thumb: "" },
+  asset_platform_id: "ethereum",
+  native_currency: "ethereum",
+  market_cap_rank: 0,
+  floor_price: {
+    usd: collection.floorPriceUsd,
+    native_currency: collection.floorPriceNative,
+  },
+  market_cap: { usd: collection.marketCapUsd },
+  volume_24h: { usd: collection.volume24hUsd },
+  floor_price_in_usd_24h_percentage_change: collection.change24h,
+  description: `${collection.name} is shown from a backend fallback snapshot while the live NFT market endpoint recovers.`,
+  fallback: true,
+});
+
+const fallbackNftMarkets = (params = {}) => {
+  const perPage = Number(params.per_page) || FALLBACK_NFT_COLLECTIONS.length;
+  return FALLBACK_NFT_COLLECTIONS.slice(0, perPage).map(toNftPayload);
+};
+
+const fallbackNftDetails = (nftId) => {
+  const collection = FALLBACK_NFT_COLLECTIONS.find((nft) => nft.id === nftId);
+  return collection ? toNftPayload(collection) : null;
+};
+
+const fallbackForPath = (path, params) => {
+  if (path === "/coins/markets") return fallbackMarketCoins(params);
+  if (path === "/simple/price") return fallbackSimplePrices(params);
+  if (path === "/coins/categories") return fallbackCategories();
+  if (path === "/search/trending") return fallbackTrending();
+  if (path === "/coins/list/new") return fallbackNewCoins();
+  if (path === "/asset_platforms") return fallbackAssetPlatforms();
+  if (path === "/exchanges") return fallbackExchanges();
+  if (path === "/nfts/markets") return fallbackNftMarkets(params);
+
+  const nftMatch = path.match(/^\/nfts\/([^/]+)$/);
+  if (nftMatch) return fallbackNftDetails(nftMatch[1]);
+
+  const chartMatch = path.match(/^\/coins\/([^/]+)\/market_chart$/);
+  if (chartMatch) return fallbackMarketChart(chartMatch[1], params.days);
+
+  const ohlcMatch = path.match(/^\/coins\/([^/]+)\/ohlc$/);
+  if (ohlcMatch) return fallbackOhlc(ohlcMatch[1], params.days);
+
+  const coinMatch = path.match(/^\/coins\/([^/]+)$/);
+  if (coinMatch) return fallbackCoinDetails(coinMatch[1]);
+
+  return null;
 };
 
 const buildUrl = (path, params = {}) => {
@@ -184,6 +519,19 @@ const buildUrl = (path, params = {}) => {
   return url;
 };
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForProviderSlot = async () => {
+  const now = Date.now();
+  const waitMs = Math.max(0, nextProviderRequestAt - now);
+  nextProviderRequestAt =
+    Math.max(now, nextProviderRequestAt) + env.marketProviderMinIntervalMs;
+
+  if (waitMs) {
+    await wait(waitMs);
+  }
+};
+
 const fetchJson = async (path, params = {}, ttl = MARKET_CACHE_TTL) => {
   const url = buildUrl(path, params);
   const cacheKey = url.toString();
@@ -194,62 +542,97 @@ const fetchJson = async (path, params = {}, ttl = MARKET_CACHE_TTL) => {
     return cached;
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), env.marketFetchTimeoutMs);
+  const requestProviderData = async ({ allowFallback = true } = {}) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      env.marketFetchTimeoutMs
+    );
 
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        accept: "application/json",
-        ...(env.coinGeckoApiKey
-          ? { "x-cg-demo-api-key": env.coinGeckoApiKey }
-          : {}),
-      },
-    });
+    try {
+      await waitForProviderSlot();
 
-    if (!response.ok) {
-      throw new ApiError(
-        response.status,
-        response.status === 429
-          ? "CoinGecko rate limit reached. Please retry shortly."
-          : "Unable to fetch market data."
-      );
-    }
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          accept: "application/json",
+          ...(env.coinGeckoApiKey
+            ? { "x-cg-demo-api-key": env.coinGeckoApiKey }
+            : {}),
+        },
+      });
 
-    const data = await response.json();
-    cache.set(cacheKey, data, ttl);
-    return data;
-  } catch (error) {
-    if (error.name === "AbortError") {
-      if (stale) {
+      if (!response.ok) {
+        throw new ApiError(
+          response.status,
+          response.status === 429
+            ? "CoinGecko rate limit reached. Please retry shortly."
+            : "Unable to fetch market data."
+        );
+      }
+
+      const data = await response.json();
+      cache.set(cacheKey, data, ttl, env.marketStaleCacheTtlMs);
+      return data;
+    } catch (error) {
+      if (error.name === "AbortError") {
+        if (stale) {
+          return stale;
+        }
+
+        throw new ApiError(
+          504,
+          "Market data provider timed out. Please retry in a moment."
+        );
+      }
+
+      if ([429, 500, 502, 503, 504].includes(error.statusCode) && stale) {
         return stale;
       }
 
-      throw new ApiError(
-        504,
-        "Market data provider timed out. Please retry in a moment."
+      if (
+        allowFallback &&
+        [429, 500, 502, 503, 504].includes(error.statusCode)
+      ) {
+        const fallback = fallbackForPath(path, params);
+
+        if (fallback) {
+          cache.set(
+            cacheKey,
+            fallback,
+            FALLBACK_CACHE_TTL,
+            env.marketStaleCacheTtlMs
+          );
+          return fallback;
+        }
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+      pendingRequests.delete(cacheKey);
+    }
+  };
+
+  if (stale) {
+    if (!pendingRequests.has(cacheKey)) {
+      const refreshPromise = requestProviderData({ allowFallback: false }).catch(
+        () => null
       );
+      pendingRequests.set(cacheKey, refreshPromise);
     }
 
-    if ([429, 500, 502, 503, 504].includes(error.statusCode) && stale) {
-      return stale;
-    }
-
-    if ([429, 500, 502, 503, 504].includes(error.statusCode)) {
-      if (path === "/coins/markets") {
-        return fallbackMarketCoins(params);
-      }
-
-      if (path === "/simple/price") {
-        return fallbackSimplePrices(params);
-      }
-    }
-
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
+    return stale;
   }
+
+  if (pendingRequests.has(cacheKey)) {
+    return pendingRequests.get(cacheKey);
+  }
+
+  const requestPromise = requestProviderData();
+
+  pendingRequests.set(cacheKey, requestPromise);
+  return requestPromise;
 };
 
 export const getMarketCoins = ({
@@ -396,13 +779,7 @@ export const getNftMarkets = async ({
       throw error;
     }
 
-    const settled = await Promise.allSettled(
-      POPULAR_NFT_IDS.slice(0, perPage).map((nftId) => getNftDetails(nftId))
-    );
-
-    return settled
-      .filter((result) => result.status === "fulfilled")
-      .map((result) => result.value);
+    return fallbackNftMarkets({ per_page: perPage });
   }
 };
 

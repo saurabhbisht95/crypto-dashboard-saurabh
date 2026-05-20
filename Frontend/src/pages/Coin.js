@@ -119,7 +119,7 @@ function Coin() {
     };
 
     appendLivePrice();
-    const intervalId = setInterval(appendLivePrice, 10000);
+    const intervalId = setInterval(appendLivePrice, 30000);
 
     return () => {
       isActive = false;
@@ -154,7 +154,7 @@ function Coin() {
             />
             {priceType === "prices" && (
               <p className="feature-muted" style={{ textAlign: "center" }}>
-                Live mode: appending fresh backend price ticks every 10 seconds.
+                Live mode: appending fresh backend price ticks every 30 seconds.
               </p>
             )}
             <LineChart chartData={chartData} />

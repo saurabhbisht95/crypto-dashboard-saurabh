@@ -27,7 +27,7 @@ function SystemStatus() {
 
   useEffect(() => {
     loadStatus();
-    const intervalId = setInterval(loadStatus, 30000);
+    const intervalId = setInterval(loadStatus, 60000);
 
     return () => clearInterval(intervalId);
   }, []);

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import ErrorState from "../components/Common/ErrorState";
 import Header from "../components/Common/Header";
 import Loader from "../components/Common/Loader";
+import PaginationComponent from "../components/Dashboard/Pagination";
 import { marketService } from "../services/marketService";
 import { getApiMessage } from "../services/http";
 import {
@@ -13,8 +14,11 @@ import {
 import "./FeaturePages.css";
 import "./MarketPages.css";
 
+const NEW_LISTING_PAGE_SIZE = 6;
+
 function Discovery() {
   const [data, setData] = useState(null);
+  const [newListingsPage, setNewListingsPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -24,6 +28,7 @@ function Discovery() {
 
     try {
       setData(await marketService.getDiscovery());
+      setNewListingsPage(1);
     } catch (err) {
       setError(getApiMessage(err, "Discovery data could not be loaded."));
     } finally {
@@ -52,6 +57,15 @@ function Discovery() {
       </>
     );
   }
+
+  const newListingsCount = Math.max(
+    1,
+    Math.ceil(data.newCoins.length / NEW_LISTING_PAGE_SIZE)
+  );
+  const visibleNewListings = data.newCoins.slice(
+    (newListingsPage - 1) * NEW_LISTING_PAGE_SIZE,
+    newListingsPage * NEW_LISTING_PAGE_SIZE
+  );
 
   return (
     <>
@@ -105,9 +119,14 @@ function Discovery() {
 
         <section className="feature-grid">
           <div className="feature-panel">
-            <h2>New Listings</h2>
+            <div className="section-toolbar">
+              <h2>New Listings</h2>
+              <span>
+                Page {newListingsPage} of {newListingsCount}
+              </span>
+            </div>
             <div className="feature-list">
-              {data.newCoins.map((coin) => (
+              {visibleNewListings.map((coin) => (
                 <Link to={`/coin/${coin.id}`} className="feature-list-item" key={coin.id}>
                   <div>
                     <h3>{coin.name}</h3>
@@ -117,6 +136,13 @@ function Discovery() {
                 </Link>
               ))}
             </div>
+            {newListingsCount > 1 && (
+              <PaginationComponent
+                page={newListingsPage}
+                count={newListingsCount}
+                handlePageChange={(event, value) => setNewListingsPage(value)}
+              />
+            )}
           </div>
 
           <div className="feature-panel">

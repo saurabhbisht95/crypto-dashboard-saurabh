@@ -154,7 +154,7 @@ function Compare() {
     };
 
     appendLivePrices();
-    const intervalId = setInterval(appendLivePrices, 10000);
+    const intervalId = setInterval(appendLivePrices, 30000);
 
     return () => {
       isActive = false;
@@ -219,7 +219,7 @@ function Compare() {
             />
             {priceType === "prices" && (
               <p className="feature-muted" style={{ textAlign: "center" }}>
-                Live comparison: fresh backend price ticks append every 10 seconds.
+                Live comparison: fresh backend price ticks append every 30 seconds.
               </p>
             )}
             <LineChart chartData={chartData} multiAxis={true} />

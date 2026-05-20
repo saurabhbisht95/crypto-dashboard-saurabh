@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import ErrorState from "../components/Common/ErrorState";
 import Header from "../components/Common/Header";
 import Loader from "../components/Common/Loader";
+import PaginationComponent from "../components/Dashboard/Pagination";
 import { getApiMessage } from "../services/http";
 import { marketService } from "../services/marketService";
 import {
@@ -20,9 +21,12 @@ const ORDER_OPTIONS = [
   { value: "id_asc", label: "Name" },
 ];
 
+const PAGE_SIZE = 12;
+
 function Screener() {
   const [categories, setCategories] = useState([]);
   const [coins, setCoins] = useState([]);
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
     category: "",
     order: "market_cap_desc",
@@ -59,6 +63,7 @@ function Screener() {
       ]);
       setCategories(categoryData.slice(0, 80));
       setCoins(screenerData.coins);
+      setPage(1);
     } catch (err) {
       setError(getApiMessage(err, "Screener data could not be loaded."));
     } finally {
@@ -73,7 +78,11 @@ function Screener() {
   const handleFilterChange = (event) => {
     const { name, value } = event.target;
     setFilters((currentFilters) => ({ ...currentFilters, [name]: value }));
+    setPage(1);
   };
+
+  const pageCount = Math.max(1, Math.ceil(coins.length / PAGE_SIZE));
+  const visibleCoins = coins.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (loading) {
     return (
@@ -167,6 +176,12 @@ function Screener() {
           </form>
 
           <div className="table-scroll">
+            <div className="section-toolbar">
+              <span>{coins.length} assets matched</span>
+              <span>
+                Page {page} of {pageCount}
+              </span>
+            </div>
             <table className="market-table">
               <thead>
                 <tr>
@@ -182,7 +197,7 @@ function Screener() {
                 </tr>
               </thead>
               <tbody>
-                {coins.map((coin) => (
+                {visibleCoins.map((coin) => (
                   <tr key={coin.id}>
                     <td>
                       <Link to={`/coin/${coin.id}`}>
@@ -214,6 +229,13 @@ function Screener() {
               </tbody>
             </table>
           </div>
+          {pageCount > 1 && (
+            <PaginationComponent
+              page={page}
+              count={pageCount}
+              handlePageChange={(event, value) => setPage(value)}
+            />
+          )}
         </section>
       </main>
     </>

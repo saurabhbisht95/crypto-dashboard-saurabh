@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import ErrorState from "../components/Common/ErrorState";
 import Header from "../components/Common/Header";
 import Loader from "../components/Common/Loader";
+import PaginationComponent from "../components/Dashboard/Pagination";
 import { getApiMessage } from "../services/http";
 import { marketService } from "../services/marketService";
 import {
@@ -13,9 +14,12 @@ import {
 import "./FeaturePages.css";
 import "./MarketPages.css";
 
+const PAGE_SIZE = 12;
+
 function NftMarket() {
   const [collections, setCollections] = useState([]);
   const [fallbackMode, setFallbackMode] = useState(false);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -27,6 +31,7 @@ function NftMarket() {
       const data = await marketService.getNfts({ perPage: 40 });
       setCollections(data.collections);
       setFallbackMode(data.fallbackMode);
+      setPage(1);
     } catch (err) {
       setError(getApiMessage(err, "NFT market data could not be loaded."));
     } finally {
@@ -56,6 +61,9 @@ function NftMarket() {
     );
   }
 
+  const pageCount = Math.max(1, Math.ceil(collections.length / PAGE_SIZE));
+  const visibleCollections = collections.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <>
       <Header />
@@ -73,8 +81,14 @@ function NftMarket() {
             </p>
           </div>
         )}
+        <div className="section-toolbar">
+          <span>{collections.length} NFT collections</span>
+          <span>
+            Page {page} of {pageCount}
+          </span>
+        </div>
         <section className="market-card-grid">
-          {collections.map((collection) => (
+          {visibleCollections.map((collection) => (
             <article className="market-card" key={collection.id}>
               <div className="market-card-header">
                 {collection.image && (
@@ -94,6 +108,13 @@ function NftMarket() {
             </article>
           ))}
         </section>
+        {pageCount > 1 && (
+          <PaginationComponent
+            page={page}
+            count={pageCount}
+            handlePageChange={(event, value) => setPage(value)}
+          />
+        )}
       </main>
     </>
   );

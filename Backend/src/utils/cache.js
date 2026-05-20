@@ -19,13 +19,26 @@ class MemoryCache {
 
   getStale(key) {
     const item = this.store.get(key);
+
+    if (!item) {
+      return null;
+    }
+
+    if (Date.now() > (item.staleUntil || item.expiresAt)) {
+      this.store.delete(key);
+      return null;
+    }
+
     return item?.value || null;
   }
 
-  set(key, value, ttlMs) {
+  set(key, value, ttlMs, staleTtlMs = ttlMs) {
+    const now = Date.now();
+
     this.store.set(key, {
       value,
-      expiresAt: Date.now() + ttlMs,
+      expiresAt: now + ttlMs,
+      staleUntil: now + Math.max(ttlMs, staleTtlMs),
     });
   }
 
@@ -36,17 +49,21 @@ class MemoryCache {
   stats() {
     const now = Date.now();
     let activeEntries = 0;
+    let staleEntries = 0;
 
     this.store.forEach((item, key) => {
-      if (now > item.expiresAt) {
+      if (now > (item.staleUntil || item.expiresAt)) {
         this.store.delete(key);
-      } else {
+      } else if (now <= item.expiresAt) {
         activeEntries += 1;
+      } else {
+        staleEntries += 1;
       }
     });
 
     return {
       activeEntries,
+      staleEntries,
       provider: "memory",
     };
   }

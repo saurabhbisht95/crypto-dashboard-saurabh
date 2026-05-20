@@ -41,7 +41,7 @@ function LiveMarketStrip({ ids = DEFAULT_IDS }) {
     };
 
     loadLivePrices();
-    const intervalId = setInterval(loadLivePrices, 10000);
+    const intervalId = setInterval(loadLivePrices, 30000);
 
     return () => {
       isActive = false;

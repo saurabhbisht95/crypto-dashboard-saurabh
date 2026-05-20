@@ -51,4 +51,6 @@ npm start
 - In production, set `CORS_ORIGIN` to your deployed frontend URL.
 - Add `COINGECKO_API_KEY` on the backend only. Do not expose market API keys in React env variables.
 - Tune `MARKET_FETCH_TIMEOUT_MS` if your deployment region needs a longer provider timeout.
-- Add a CoinGecko API key before launch for higher rate limits. The backend serves stale cache, then a small fallback market snapshot, if CoinGecko temporarily rate-limits the public API.
+- Keep `MARKET_PROVIDER_MIN_INTERVAL_MS` near `2500` for public/demo CoinGecko usage so the backend stays around 24 provider calls per minute. Lower it only after moving to a paid provider tier.
+- Keep `MARKET_STALE_CACHE_TTL_MS` enabled. The backend now serves stale cache instantly, refreshes in the background, and only uses a short fallback snapshot when CoinGecko returns `429` or temporary `5xx` errors.
+- Add a paid CoinGecko API key before launch for higher and contract-backed rate limits. The app is protected from short outages, but a serious production crypto product should not depend only on the shared public API.

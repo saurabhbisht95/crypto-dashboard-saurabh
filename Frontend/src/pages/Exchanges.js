@@ -2,14 +2,18 @@ import React, { useCallback, useEffect, useState } from "react";
 import ErrorState from "../components/Common/ErrorState";
 import Header from "../components/Common/Header";
 import Loader from "../components/Common/Loader";
+import PaginationComponent from "../components/Dashboard/Pagination";
 import { getApiMessage } from "../services/http";
 import { marketService } from "../services/marketService";
 import { compactNumber } from "../utils/formatters";
 import "./FeaturePages.css";
 import "./MarketPages.css";
 
+const PAGE_SIZE = 20;
+
 function Exchanges() {
   const [exchanges, setExchanges] = useState([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -19,6 +23,7 @@ function Exchanges() {
 
     try {
       setExchanges(await marketService.getExchanges({ perPage: 80 }));
+      setPage(1);
     } catch (err) {
       setError(getApiMessage(err, "Exchange data could not be loaded."));
     } finally {
@@ -48,6 +53,9 @@ function Exchanges() {
     );
   }
 
+  const pageCount = Math.max(1, Math.ceil(exchanges.length / PAGE_SIZE));
+  const visibleExchanges = exchanges.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <>
       <Header />
@@ -59,6 +67,12 @@ function Exchanges() {
           </div>
         </div>
         <section className="feature-panel table-scroll">
+          <div className="section-toolbar">
+            <span>{exchanges.length} ranked exchanges</span>
+            <span>
+              Page {page} of {pageCount}
+            </span>
+          </div>
           <table className="market-table">
             <thead>
               <tr>
@@ -71,7 +85,7 @@ function Exchanges() {
               </tr>
             </thead>
             <tbody>
-              {exchanges.map((exchange) => (
+              {visibleExchanges.map((exchange) => (
                 <tr key={exchange.id}>
                   <td>
                     <a href={exchange.url} target="_blank" rel="noreferrer">
@@ -89,6 +103,13 @@ function Exchanges() {
               ))}
             </tbody>
           </table>
+          {pageCount > 1 && (
+            <PaginationComponent
+              page={page}
+              count={pageCount}
+              handlePageChange={(event, value) => setPage(value)}
+            />
+          )}
         </section>
       </main>
     </>
