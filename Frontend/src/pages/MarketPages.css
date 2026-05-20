@@ -1,7 +1,12 @@
 .page-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.75rem;
+}
+
+.page-actions .feature-action {
+  min-width: 112px;
 }
 
 .market-card-grid {
