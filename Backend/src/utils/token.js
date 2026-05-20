@@ -1,7 +1,13 @@
 import jwt from "jsonwebtoken";
-import { env, isProduction } from "../config/env.js";
+import { env } from "../config/env.js";
 
 const TOKEN_COOKIE_NAME = "cryptotracker_token";
+const getAuthCookieOptions = () => ({
+  httpOnly: true,
+  secure: env.cookieSecure,
+  sameSite: env.cookieSameSite,
+  path: "/",
+});
 
 export const signAccessToken = (userId) => {
   return jwt.sign({ sub: userId }, env.jwtSecret, {
@@ -15,19 +21,13 @@ export const verifyAccessToken = (token) => {
 
 export const setAuthCookie = (res, token) => {
   res.cookie(TOKEN_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
+    ...getAuthCookieOptions(),
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
 
 export const clearAuthCookie = (res) => {
-  res.clearCookie(TOKEN_COOKIE_NAME, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-  });
+  res.clearCookie(TOKEN_COOKIE_NAME, getAuthCookieOptions());
 };
 
 export const getTokenFromRequest = (req) => {
