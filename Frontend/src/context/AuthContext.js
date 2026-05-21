@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { authService } from "../services/authService";
-import { setAuthToken } from "../services/http";
+import { getStoredAuthToken, setAuthToken } from "../services/http";
 import { watchlistService } from "../services/watchlistService";
 
 const AuthContext = createContext(null);
@@ -17,10 +17,19 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
+    const tokenAtStart = getStoredAuthToken();
+
     try {
       const data = await authService.me();
+      if (getStoredAuthToken() !== tokenAtStart) {
+        return;
+      }
       setUser(data.user);
     } catch (err) {
+      if (getStoredAuthToken() !== tokenAtStart) {
+        return;
+      }
+
       if (err?.response?.status === 401) {
         setAuthToken("");
       }
@@ -38,6 +47,7 @@ export const AuthProvider = ({ children }) => {
     const data = await authService.login(payload);
     setAuthToken(data.token);
     setUser(data.user);
+    setLoading(false);
     return data.user;
   }, []);
 
@@ -45,6 +55,7 @@ export const AuthProvider = ({ children }) => {
     const data = await authService.demoLogin();
     setAuthToken(data.token);
     setUser(data.user);
+    setLoading(false);
     return data.user;
   }, []);
 
@@ -52,6 +63,7 @@ export const AuthProvider = ({ children }) => {
     const data = await authService.register(payload);
     setAuthToken(data.token);
     setUser(data.user);
+    setLoading(false);
     return data.user;
   }, []);
 
