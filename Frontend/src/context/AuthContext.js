@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import { authService } from "../services/authService";
+import { setAuthToken } from "../services/http";
 import { watchlistService } from "../services/watchlistService";
 
 const AuthContext = createContext(null);
@@ -19,7 +20,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = await authService.me();
       setUser(data.user);
-    } catch {
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        setAuthToken("");
+      }
       setUser(null);
     } finally {
       setLoading(false);
@@ -32,25 +36,32 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (payload) => {
     const data = await authService.login(payload);
+    setAuthToken(data.token);
     setUser(data.user);
     return data.user;
   }, []);
 
   const demoLogin = useCallback(async () => {
     const data = await authService.demoLogin();
+    setAuthToken(data.token);
     setUser(data.user);
     return data.user;
   }, []);
 
   const register = useCallback(async (payload) => {
     const data = await authService.register(payload);
+    setAuthToken(data.token);
     setUser(data.user);
     return data.user;
   }, []);
 
   const logout = useCallback(async () => {
-    await authService.logout();
-    setUser(null);
+    try {
+      await authService.logout();
+    } finally {
+      setAuthToken("");
+      setUser(null);
+    }
   }, []);
 
   const syncWatchlist = useCallback((watchlist) => {
