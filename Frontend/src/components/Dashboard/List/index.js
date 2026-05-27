@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./styles.css";
 import TrendingDownRoundedIcon from "@mui/icons-material/TrendingDownRounded";
@@ -20,15 +20,11 @@ function List({ coin, delay }) {
     removeFromWatchlist,
     watchlistIds,
   } = useAuth();
-  const [isCoinAdded, setIsCoinAdded] = useState(watchlistIds.includes(coin.id));
+  const isCoinAdded = watchlistIds.includes(coin.id);
   const priceChange = coin.price_change_percentage_24h || 0;
   const currentPrice = coin.current_price || 0;
   const totalVolume = coin.total_volume || 0;
   const marketCap = coin.market_cap || 0;
-
-  useEffect(() => {
-    setIsCoinAdded(watchlistIds.includes(coin.id));
-  }, [coin.id, watchlistIds]);
 
   const handleWatchlistClick = async (event) => {
     event.preventDefault();
@@ -58,7 +54,8 @@ function List({ coin, delay }) {
       className="list-row"
       initial={{ opacity: 0, x: -50 }}
       whileInView={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5, delay: delay }}
+      transition={{ duration: 0.35, delay }}
+      viewport={{ once: true, amount: 0.2 }}
       onClick={() => navigate(`/coin/${coin.id}`)}
     >
       <Tooltip title="Coin Image">
@@ -67,6 +64,8 @@ function List({ coin, delay }) {
             src={coin.image}
             className="coin-image coin-image-td"
             alt={coin.name}
+            loading="lazy"
+            decoding="async"
           />
         </td>
       </Tooltip>
@@ -125,16 +124,24 @@ function List({ coin, delay }) {
         </td>
       </Tooltip>
       <td className="coin-name mobile">${convertNumber(marketCap)}</td>
-      <td
-        className={`watchlist-icon ${
-          priceChange < 0 && "watchlist-icon-red"
-        }`}
-        onClick={handleWatchlistClick}
-      >
-        {isCoinAdded ? <StarIcon /> : <StarOutlineIcon />}
+      <td className="watchlist-cell">
+        <button
+          type="button"
+          className={`watchlist-icon ${
+            priceChange < 0 ? "watchlist-icon-red" : ""
+          }`}
+          onClick={handleWatchlistClick}
+          aria-label={
+            isCoinAdded
+              ? `Remove ${coin.name} from watchlist`
+              : `Add ${coin.name} to watchlist`
+          }
+        >
+          {isCoinAdded ? <StarIcon /> : <StarOutlineIcon />}
+        </button>
       </td>
     </motion.tr>
   );
 }
 
-export default List;
+export default memo(List);

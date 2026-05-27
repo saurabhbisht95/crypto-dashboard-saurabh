@@ -7,10 +7,13 @@ function Search({ search, handleChange }) {
     <div className="search-flex">
       <SearchIcon sx={{ color: "var(--grey)", fontSize: "1.2rem" }} />
       <input
+        aria-label="Search coins"
         className="search-input"
-        placeholder="Search"
+        autoComplete="off"
+        placeholder="Search coins by name or symbol"
+        type="search"
         value={search}
-        onChange={(e) => handleChange(e)}
+        onChange={handleChange}
       />
     </div>
   );

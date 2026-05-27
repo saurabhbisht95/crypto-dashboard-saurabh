@@ -1,9 +1,9 @@
 .grid-flex {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
   align-items: flex-start;
-  flex-wrap: wrap;
-  width: 100%;
+  width: min(92%, 1180px);
+  margin: 0 auto;
   gap: 1rem;
 }
 
@@ -12,6 +12,31 @@
   display: block;
   margin-left: auto;
   margin-right: auto;
+}
+
+.list-flex tbody {
+  display: block;
+}
+
+.dashboard-empty-state {
+  grid-column: 1 / -1;
+  width: min(100%, 560px);
+  margin: 1rem auto;
+  padding: 1.5rem;
+  border: 1px solid rgba(58, 128, 233, 0.2);
+  border-radius: 8px;
+  background: var(--darkgrey);
+  text-align: center;
+}
+
+.dashboard-empty-state h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.dashboard-empty-state p {
+  margin: 0.4rem 0 1rem;
+  color: var(--grey);
 }
 
 @media only screen and (max-width: 600px) {

@@ -40,6 +40,12 @@
   text-align: right !important;
 }
 
+.watchlist-cell {
+  display: flex;
+  justify-content: flex-end;
+  width: 3rem !important;
+}
+
 .mobile {
   display: none;
 }

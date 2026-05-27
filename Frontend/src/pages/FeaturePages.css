@@ -23,6 +23,76 @@
   line-height: 1.5;
 }
 
+.feature-eyebrow {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--blue);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.dashboard-overview {
+  margin-bottom: 1rem;
+}
+
+.dashboard-heading {
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.dashboard-stat-pill {
+  display: grid;
+  min-width: 128px;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(58, 128, 233, 0.24);
+  border-radius: 8px;
+  background: var(--darkgrey);
+  text-align: right;
+}
+
+.dashboard-stat-pill span,
+.dashboard-stat-pill small {
+  color: var(--grey);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.dashboard-stat-pill strong {
+  color: var(--white);
+  font-size: 1.75rem;
+  line-height: 1.1;
+}
+
+.dashboard-summary {
+  margin-bottom: 1rem;
+}
+
+.dashboard-tools {
+  display: flex;
+  align-items: center;
+  width: min(92%, 1180px);
+  margin: 0 auto 1.25rem;
+  gap: 1rem;
+}
+
+.dashboard-tools .search-flex {
+  flex: 1;
+  width: auto;
+  margin: 0;
+}
+
+.dashboard-tools p {
+  min-width: 11rem;
+  margin: 0;
+  color: var(--grey);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: right;
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -270,5 +340,15 @@
   .section-toolbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .dashboard-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-tools p {
+    min-width: 0;
+    text-align: left;
   }
 }

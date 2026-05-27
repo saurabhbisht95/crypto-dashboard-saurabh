@@ -1,130 +1,88 @@
 import { createTheme, ThemeProvider } from "@mui/material";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
-import Coin from "./pages/Coin";
-import Compare from "./pages/Compare";
-import Dashboard from "./pages/Dashboard";
-import Home from "./pages/Home";
-import Watchlist from "./pages/Watchlist";
-import ForgotPassword from "./pages/ForgotPassword";
-import NotFound from "./pages/NotFound";
-import Alerts from "./pages/Alerts";
-import Converter from "./pages/Converter";
-import Discovery from "./pages/Discovery";
-import Exchanges from "./pages/Exchanges";
-import NftMarket from "./pages/NftMarket";
-import Portfolio from "./pages/Portfolio";
-import Screener from "./pages/Screener";
-import SystemStatus from "./pages/SystemStatus";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useEffect } from "react";
-import Login from "./pages/Login/Login";
-import Signup from "./pages/Signup/Signup";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/Common/ProtectedRoute";
+import Loader from "./components/Common/Loader";
+
+const Alerts = lazy(() => import("./pages/Alerts"));
+const Coin = lazy(() => import("./pages/Coin"));
+const Compare = lazy(() => import("./pages/Compare"));
+const Converter = lazy(() => import("./pages/Converter"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Discovery = lazy(() => import("./pages/Discovery"));
+const Exchanges = lazy(() => import("./pages/Exchanges"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login/Login"));
+const NftMarket = lazy(() => import("./pages/NftMarket"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Portfolio = lazy(() => import("./pages/Portfolio"));
+const Screener = lazy(() => import("./pages/Screener"));
+const Signup = lazy(() => import("./pages/Signup/Signup"));
+const SystemStatus = lazy(() => import("./pages/SystemStatus"));
+const Watchlist = lazy(() => import("./pages/Watchlist"));
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: "#3a80e9",
+    },
+  },
+});
 
 function App() {
-  const theme = createTheme({
-    palette: {
-      primary: {
-        main: "#3a80e9",
-      },
-    },
-  });
-
-  useEffect(() => {
-    const cursor = document.getElementById("cursor");
-    const cursorPointer = document.getElementById("cursor-pointer");
-
-    if (!cursor || !cursorPointer) return;
-
-    const handleMouseMove = (e) => {
-      return (
-        (cursor.style.left = e.clientX + "px"),
-        (cursor.style.top = e.clientY + "px"),
-        (cursorPointer.style.left = e.clientX + "px"),
-        (cursorPointer.style.top = e.clientY + "px")
-      );
-    };
-
-    const handleMouseDown = () => {
-      return (
-        (cursor.style.height = "0.5rem"),
-        (cursor.style.width = "0.5rem"),
-        (cursorPointer.style.height = "3rem"),
-        (cursorPointer.style.width = "3rem")
-      );
-    };
-
-    const handleMouseUp = () => {
-      return (
-        (cursor.style.height = "0.3rem"),
-        (cursor.style.width = "0.3rem"),
-        (cursorPointer.style.height = "2rem"),
-        (cursorPointer.style.width = "2rem")
-      );
-    };
-
-    document.body.addEventListener("mousemove", handleMouseMove);
-    document.body.addEventListener("mousedown", handleMouseDown);
-    document.body.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      document.body.removeEventListener("mousemove", handleMouseMove);
-      document.body.removeEventListener("mousedown", handleMouseDown);
-      document.body.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
-
   return (
     <div className="App">
-      <div className="cursor" id="cursor" />
-      <div className="cursor-pointer" id="cursor-pointer" />
       <ToastContainer />
       <ThemeProvider theme={theme}>
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/discover" element={<Discovery />} />
-              <Route path="/screener" element={<Screener />} />
-              <Route path="/exchanges" element={<Exchanges />} />
-              <Route path="/nfts" element={<NftMarket />} />
-              <Route path="/converter" element={<Converter />} />
-              <Route path="/coin/:id" element={<Coin />} />
-              <Route path="/compare" element={<Compare />} />
-              <Route
-                path="/watchlist"
-                element={
-                  <ProtectedRoute>
-                    <Watchlist />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/portfolio"
-                element={
-                  <ProtectedRoute>
-                    <Portfolio />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/alerts"
-                element={
-                  <ProtectedRoute>
-                    <Alerts />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/status" element={<SystemStatus />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <Suspense fallback={<Loader />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/discover" element={<Discovery />} />
+                <Route path="/screener" element={<Screener />} />
+                <Route path="/exchanges" element={<Exchanges />} />
+                <Route path="/nfts" element={<NftMarket />} />
+                <Route path="/converter" element={<Converter />} />
+                <Route path="/coin/:id" element={<Coin />} />
+                <Route path="/compare" element={<Compare />} />
+                <Route
+                  path="/watchlist"
+                  element={
+                    <ProtectedRoute>
+                      <Watchlist />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/portfolio"
+                  element={
+                    <ProtectedRoute>
+                      <Portfolio />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/alerts"
+                  element={
+                    <ProtectedRoute>
+                      <Alerts />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/status" element={<SystemStatus />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>

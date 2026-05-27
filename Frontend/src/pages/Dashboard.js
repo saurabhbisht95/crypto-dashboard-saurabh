@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
 import Header from "../components/Common/Header";
 import Loader from "../components/Common/Loader";
 import Search from "../components/Dashboard/Search";
@@ -30,6 +30,7 @@ function Dashboard() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const deferredSearch = useDeferredValue(search);
 
   useEffect(() => {
     let isActive = true;
@@ -71,15 +72,20 @@ function Dashboard() {
     setPage(1);
   };
 
-  const filteredCoins = useMemo(
-    () =>
-      coins.filter(
-        (coin) =>
-          coin.name.toLowerCase().includes(search.trim().toLowerCase()) ||
-          coin.symbol.toLowerCase().includes(search.trim().toLowerCase())
-      ),
-    [coins, search]
+  const normalizedSearch = useMemo(
+    () => deferredSearch.trim().toLowerCase(),
+    [deferredSearch]
   );
+
+  const filteredCoins = useMemo(() => {
+    if (!normalizedSearch) return coins;
+
+    return coins.filter(
+      (coin) =>
+        coin.name.toLowerCase().includes(normalizedSearch) ||
+        coin.symbol.toLowerCase().includes(normalizedSearch)
+    );
+  }, [coins, normalizedSearch]);
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -87,8 +93,15 @@ function Dashboard() {
 
   const pageCount = Math.max(1, Math.ceil(coins.length / 10));
   const initialCount = (page - 1) * 10;
-  const paginatedCoins = coins.slice(initialCount, initialCount + 10);
-  const visibleCoins = search ? filteredCoins : paginatedCoins;
+  const paginatedCoins = useMemo(
+    () => coins.slice(initialCount, initialCount + 10),
+    [coins, initialCount]
+  );
+  const isSearching = Boolean(normalizedSearch);
+  const visibleCoins = isSearching ? filteredCoins : paginatedCoins;
+  const resultLabel = isSearching
+    ? `${filteredCoins.length} matches for "${deferredSearch.trim()}"`
+    : `${coins.length} assets tracked`;
 
   return (
     <>
@@ -104,8 +117,25 @@ function Dashboard() {
       ) : (
         <>
           <LiveMarketStrip />
+          <section className="feature-shell dashboard-overview">
+            <div className="feature-header dashboard-heading">
+              <div>
+                <span className="feature-eyebrow">Markets</span>
+                <h1>Market dashboard</h1>
+                <p>
+                  Scan live prices, market breadth, and momentum across the top
+                  crypto assets.
+                </p>
+              </div>
+              <div className="dashboard-stat-pill" aria-label={resultLabel}>
+                <span>Showing</span>
+                <strong>{visibleCoins.length}</strong>
+                <small>{isSearching ? "matches" : `of ${coins.length}`}</small>
+              </div>
+            </div>
+          </section>
           {summary && (
-            <section className="feature-shell" style={{ marginBottom: "1rem" }}>
+            <section className="feature-shell dashboard-summary">
               <div className="metric-grid">
                 <div className="metric-card">
                   <span>Top 100 Market Cap</span>
@@ -134,19 +164,19 @@ function Dashboard() {
               </div>
             </section>
           )}
-          <Search search={search} handleChange={handleChange} />
-          <TabsComponent
-            coins={visibleCoins}
-            setSearch={setSearch}
-          />
-          {!search && (
+          <section className="dashboard-tools" aria-label="Dashboard filters">
+            <Search search={search} handleChange={handleChange} />
+            <p>{resultLabel}</p>
+          </section>
+          <TabsComponent coins={visibleCoins} setSearch={setSearch} />
+          {!isSearching && (
             <PaginationComponent
               page={page}
               count={pageCount}
               handlePageChange={handlePageChange}
             />
           )}
-          {!search && (
+          {!isSearching && (
             <>
               <MarketIntelligence />
               <MarketHeatmap />

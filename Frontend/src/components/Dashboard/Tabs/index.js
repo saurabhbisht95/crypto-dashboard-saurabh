@@ -8,6 +8,14 @@ import Grid from "../Grid";
 import List from "../List";
 import Button from "../../Common/Button";
 
+const EmptyDashboardState = ({ setSearch }) => (
+  <div className="dashboard-empty-state">
+    <h2>No coins found</h2>
+    <p>Try a different name or symbol.</p>
+    {setSearch && <Button text="Clear Search" onClick={() => setSearch("")} />}
+  </div>
+);
+
 export default function TabsComponent({ coins, setSearch }) {
   const [value, setValue] = React.useState("grid");
 
@@ -37,53 +45,25 @@ export default function TabsComponent({ coins, setSearch }) {
         <div className="grid-flex">
           {coins.length > 0 ? (
             coins.map((coin, i) => (
-              <Grid coin={coin} key={i} delay={(i % 4) * 0.2} />
+              <Grid coin={coin} key={coin.id} delay={(i % 4) * 0.04} />
             ))
           ) : (
-            <div>
-              <h1 style={{ textAlign: "center" }}>
-                Sorry, Couldn't find the coin you're looking for 😞
-              </h1>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  margin: "2rem",
-                }}
-              >
-                {setSearch && (
-                  <Button text="Clear Search" onClick={() => setSearch("")} />
-                )}
-              </div>
-            </div>
+            <EmptyDashboardState setSearch={setSearch} />
           )}
         </div>
       </TabPanel>
       <TabPanel value="list">
-        <table className="list-flex">
-          {coins.length > 0 ? (
-            coins.map((coin, i) => (
-              <List coin={coin} key={i} delay={(i % 8) * 0.2} />
-            ))
-          ) : (
-            <div>
-              <h1 style={{ textAlign: "center" }}>
-                Sorry, Couldn't find the coin you're looking for 😞
-              </h1>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  margin: "2rem",
-                }}
-              >
-                {setSearch && (
-                  <Button text="Clear Search" onClick={() => setSearch("")} />
-                )}
-              </div>
-            </div>
-          )}
-        </table>
+        {coins.length > 0 ? (
+          <table className="list-flex">
+            <tbody>
+              {coins.map((coin, i) => (
+                <List coin={coin} key={coin.id} delay={(i % 8) * 0.03} />
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <EmptyDashboardState setSearch={setSearch} />
+        )}
       </TabPanel>
     </TabContext>
   );

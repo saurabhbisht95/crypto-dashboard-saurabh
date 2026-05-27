@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { memo } from "react";
+import { useNavigate } from "react-router-dom";
 import "./styles.css";
 import TrendingDownRoundedIcon from "@mui/icons-material/TrendingDownRounded";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
@@ -18,15 +18,11 @@ function Grid({ coin, delay }) {
     removeFromWatchlist,
     watchlistIds,
   } = useAuth();
-  const [isCoinAdded, setIsCoinAdded] = useState(watchlistIds.includes(coin.id));
+  const isCoinAdded = watchlistIds.includes(coin.id);
   const priceChange = coin.price_change_percentage_24h || 0;
   const currentPrice = coin.current_price || 0;
   const totalVolume = coin.total_volume || 0;
   const marketCap = coin.market_cap || 0;
-
-  useEffect(() => {
-    setIsCoinAdded(watchlistIds.includes(coin.id));
-  }, [coin.id, watchlistIds]);
 
   const handleWatchlistClick = async (event) => {
     event.preventDefault();
@@ -51,68 +47,78 @@ function Grid({ coin, delay }) {
     }
   };
 
+  const handleCardKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      navigate(`/coin/${coin.id}`);
+    }
+  };
+
   return (
-    <Link to={`/coin/${coin.id}`}>
-      <motion.div
-        className={`grid ${priceChange < 0 && "grid-red"}`}
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: delay }}
-      >
-        <div className="img-flex">
-          <img src={coin.image} className="coin-image" alt={coin.name} />
-          <div className="icon-flex">
-            <div className="info-flex">
-              <p className="coin-symbol">{coin.symbol}</p>
-              <p className="coin-name">{coin.name}</p>
-            </div>
-            <div
-              className={`watchlist-icon ${
-                priceChange < 0 && "watchlist-icon-red"
-              }`}
-              onClick={handleWatchlistClick}
-            >
-              {isCoinAdded ? <StarIcon /> : <StarOutlineIcon />}
-            </div>
+    <motion.div
+      className={`grid ${priceChange < 0 ? "grid-red" : ""}`}
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay }}
+      viewport={{ once: true, amount: 0.2 }}
+      role="link"
+      tabIndex={0}
+      onClick={() => navigate(`/coin/${coin.id}`)}
+      onKeyDown={handleCardKeyDown}
+    >
+      <div className="img-flex">
+        <img
+          src={coin.image}
+          className="coin-image"
+          alt={coin.name}
+          loading="lazy"
+          decoding="async"
+        />
+        <div className="icon-flex">
+          <div className="info-flex">
+            <p className="coin-symbol">{coin.symbol}</p>
+            <p className="coin-name">{coin.name}</p>
+          </div>
+          <button
+            type="button"
+            className={`watchlist-icon ${
+              priceChange < 0 ? "watchlist-icon-red" : ""
+            }`}
+            onClick={handleWatchlistClick}
+            aria-label={
+              isCoinAdded
+                ? `Remove ${coin.name} from watchlist`
+                : `Add ${coin.name} to watchlist`
+            }
+          >
+            {isCoinAdded ? <StarIcon /> : <StarOutlineIcon />}
+          </button>
+        </div>
+      </div>
+      {priceChange >= 0 ? (
+        <div className="chip-flex">
+          <div className="price-chip">{priceChange.toFixed(2)}%</div>
+          <div className="chip-icon">
+            <TrendingUpRoundedIcon />
           </div>
         </div>
-        {priceChange >= 0 ? (
-          <div className="chip-flex">
-            <div className="price-chip">
-              {priceChange.toFixed(2)}%
-            </div>
-            <div className="chip-icon">
-              <TrendingUpRoundedIcon />
-            </div>
+      ) : (
+        <div className="chip-flex">
+          <div className="price-chip red">{priceChange.toFixed(2)}%</div>
+          <div className="chip-icon red">
+            <TrendingDownRoundedIcon />
           </div>
-        ) : (
-          <div className="chip-flex">
-            <div className="price-chip red">
-              {priceChange.toFixed(2)}%
-            </div>
-            <div className="chip-icon red">
-              <TrendingDownRoundedIcon />
-            </div>
-          </div>
-        )}
-        {priceChange >= 0 ? (
-          <p className="current-price">
-            ${currentPrice.toLocaleString()}
-          </p>
-        ) : (
-          <p className="current-price-red">
-            ${currentPrice.toLocaleString()}
-          </p>
-        )}
-        <p className="coin-name">
-          Total Volume : {totalVolume.toLocaleString()}
-        </p>
-        <p className="coin-name">
-          Market Capital : ${marketCap.toLocaleString()}
-        </p>
-      </motion.div>
-    </Link>
+        </div>
+      )}
+      {priceChange >= 0 ? (
+        <p className="current-price">${currentPrice.toLocaleString()}</p>
+      ) : (
+        <p className="current-price-red">${currentPrice.toLocaleString()}</p>
+      )}
+      <p className="coin-name">Total Volume : {totalVolume.toLocaleString()}</p>
+      <p className="coin-name">Market Capital : ${marketCap.toLocaleString()}</p>
+    </motion.div>
   );
 }
 
-export default Grid;
+export default memo(Grid);

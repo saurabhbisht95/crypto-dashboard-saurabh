@@ -2,22 +2,29 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  width: 250px;
+  width: auto;
+  min-height: 250px;
   padding: 2rem;
   background-color: var(--darkgrey);
   border-radius: 0.8rem;
   border: 2px solid var(--darkgrey);
   cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
 .grid:hover {
   border: 2px solid var(--green);
-  transition: all 0.3s;
+  transform: translateY(-2px);
 }
 
 .grid-red:hover {
   border: 2px solid var(--red);
-  transition: all 0.3s;
+}
+
+.grid:focus-visible {
+  border-color: var(--blue);
+  outline: 3px solid rgba(58, 128, 233, 0.3);
+  outline-offset: 3px;
 }
 
 .img-flex {
@@ -35,6 +42,8 @@
 }
 
 .watchlist-icon {
+  appearance: none;
+  background: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -44,11 +53,17 @@
   padding: 0.5rem;
   height: 1.5rem;
   width: 1.5rem !important;
+  cursor: pointer;
 }
 
 .watchlist-icon-red {
   border: 2px solid var(--red);
   color: var(--red);
+}
+
+.watchlist-icon:focus-visible {
+  outline: 3px solid rgba(58, 128, 233, 0.35);
+  outline-offset: 3px;
 }
 
 .coin-image {
