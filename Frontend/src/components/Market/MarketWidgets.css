@@ -210,8 +210,26 @@
 }
 
 @media (max-width: 620px) {
-  .live-strip-track,
   .insight-grid {
     grid-template-columns: 1fr;
+  }
+
+  .live-strip-track {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.35rem;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .live-strip-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .live-tile {
+    flex: 0 0 172px;
+    min-height: 112px;
+    scroll-snap-align: start;
   }
 }
