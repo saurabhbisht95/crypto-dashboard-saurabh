@@ -1,4 +1,11 @@
-import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
+import React, {
+  lazy,
+  Suspense,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import Header from "../components/Common/Header";
 import Loader from "../components/Common/Loader";
 import Search from "../components/Dashboard/Search";
@@ -9,12 +16,14 @@ import TopButton from "../components/Common/TopButton";
 import Footer from "../components/Common/Footer/footer";
 import ErrorState from "../components/Common/ErrorState";
 import LiveMarketStrip from "../components/Market/LiveMarketStrip";
-import MarketHeatmap from "../components/Market/MarketHeatmap";
-import MarketIntelligence from "../components/Market/MarketIntelligence";
 import { get100Coins } from "../functions/get100Coins";
 import { getApiErrorMessage } from "../functions/api";
-import { marketService } from "../services/marketService";
 import "./FeaturePages.css";
+
+const MarketHeatmap = lazy(() => import("../components/Market/MarketHeatmap"));
+const MarketIntelligence = lazy(() =>
+  import("../components/Market/MarketIntelligence")
+);
 
 const compactCurrency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -23,6 +32,33 @@ const compactCurrency = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
+const buildMarketSummary = (marketCoins) => {
+  const sortedByChange = [...marketCoins].sort(
+    (a, b) =>
+      (b.price_change_percentage_24h || 0) -
+      (a.price_change_percentage_24h || 0)
+  );
+  const marketCap = marketCoins.reduce(
+    (sum, coin) => sum + (coin.market_cap || 0),
+    0
+  );
+  const volume24h = marketCoins.reduce(
+    (sum, coin) => sum + (coin.total_volume || 0),
+    0
+  );
+  const bitcoinMarketCap =
+    marketCoins.find((coin) => coin.id === "bitcoin")?.market_cap || 0;
+
+  return {
+    marketCap,
+    volume24h,
+    topGainers: sortedByChange.slice(0, 5),
+    topLosers: sortedByChange.slice(-5).reverse(),
+    bitcoinDominance:
+      marketCap > 0 ? (bitcoinMarketCap / marketCap) * 100 : 0,
+  };
+};
+
 function Dashboard() {
   const [coins, setCoins] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -30,6 +66,7 @@ function Dashboard() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [shouldLoadInsights, setShouldLoadInsights] = useState(false);
   const deferredSearch = useDeferredValue(search);
 
   useEffect(() => {
@@ -46,15 +83,14 @@ function Dashboard() {
     setError("");
 
     try {
-      const [response, marketSummary] = await Promise.all([
-        get100Coins(),
-        marketService.getSummary(),
-      ]);
+      const response = await get100Coins();
 
       if (!isActive()) return;
 
-      setCoins(Array.isArray(response) ? response : []);
-      setSummary(marketSummary);
+      const marketCoins = Array.isArray(response) ? response : [];
+
+      setCoins(marketCoins);
+      setSummary(buildMarketSummary(marketCoins));
       setPage(1);
     } catch (err) {
       if (!isActive()) return;
@@ -102,6 +138,27 @@ function Dashboard() {
   const resultLabel = isSearching
     ? `${filteredCoins.length} matches for "${deferredSearch.trim()}"`
     : `${coins.length} assets tracked`;
+
+  useEffect(() => {
+    if (loading || error || isSearching) {
+      setShouldLoadInsights(false);
+      return undefined;
+    }
+
+    const scheduleInsights = () => setShouldLoadInsights(true);
+    const supportsIdleCallback = typeof window.requestIdleCallback === "function";
+    const taskId = supportsIdleCallback
+      ? window.requestIdleCallback(scheduleInsights, { timeout: 1600 })
+      : window.setTimeout(scheduleInsights, 700);
+
+    return () => {
+      if (supportsIdleCallback) {
+        window.cancelIdleCallback(taskId);
+      } else {
+        window.clearTimeout(taskId);
+      }
+    };
+  }, [error, isSearching, loading]);
 
   return (
     <>
@@ -176,11 +233,11 @@ function Dashboard() {
               handlePageChange={handlePageChange}
             />
           )}
-          {!isSearching && (
-            <>
+          {!isSearching && shouldLoadInsights && (
+            <Suspense fallback={null}>
               <MarketIntelligence />
               <MarketHeatmap />
-            </>
+            </Suspense>
           )}
         </>
       )}
