@@ -313,6 +313,125 @@
   margin: 1.5rem 0 0;
 }
 
+.compare-page {
+  min-height: 100vh;
+}
+
+.compare-shell {
+  width: min(92%, 1180px);
+  margin: 1.5rem auto 4rem;
+}
+
+.compare-header {
+  margin-bottom: 1.25rem;
+}
+
+.compare-coin-grid,
+.compare-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.compare-coin-card.grey-wrapper,
+.compare-chart-panel.grey-wrapper,
+.compare-info-grid .grey-wrapper {
+  width: 100%;
+  margin: 0;
+  border: 1px solid rgba(58, 128, 233, 0.18);
+  border-radius: 8px;
+}
+
+.compare-chart-panel.grey-wrapper {
+  margin-top: 1rem;
+  padding: 1.25rem;
+}
+
+.compare-chart-box {
+  position: relative;
+  width: 100%;
+  min-height: clamp(280px, 42vw, 420px);
+}
+
+.compare-chart-box canvas {
+  max-width: 100%;
+}
+
+.compare-chart-panel .MuiToggleButtonGroup-root {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.compare-chart-panel .MuiToggleButtonGroup-grouped {
+  border-radius: 6px !important;
+}
+
+.compare-info-grid {
+  margin-top: 1rem;
+}
+
+.compare-info-grid .info-component {
+  align-self: start;
+}
+
+.compare-page .feature-muted {
+  margin: -0.5rem 0 1rem;
+  line-height: 1.5;
+}
+
+.compare-coin-card .list-row {
+  width: 100%;
+  min-height: 5rem;
+  padding: 0.85rem 0.75rem;
+  margin: 0 !important;
+  gap: 0.75rem;
+  border-radius: 8px;
+}
+
+.compare-coin-card .list-row:hover {
+  background-color: rgba(58, 128, 233, 0.08);
+}
+
+.compare-coin-card .td-img {
+  flex: 0 0 2.75rem;
+  width: 2.75rem !important;
+  margin-right: 0;
+}
+
+.compare-coin-card .td-info {
+  flex: 1 1 8rem;
+  width: auto !important;
+  min-width: 6.5rem;
+}
+
+.compare-coin-card .list-row td {
+  width: auto;
+  min-width: 0;
+}
+
+.compare-coin-card .td-current-price {
+  flex: 0 0 7rem;
+  width: auto !important;
+}
+
+.compare-coin-card .td-totalVolume,
+.compare-coin-card .td-marketCap {
+  display: none;
+}
+
+.compare-coin-card .mobile {
+  display: block !important;
+  flex: 0 0 4.8rem;
+  color: var(--grey);
+  text-align: right !important;
+}
+
+.compare-coin-card .watchlist-cell {
+  flex: 0 0 2.5rem;
+  width: 2.5rem !important;
+}
+
 @media (max-width: 960px) {
   .metric-grid,
   .feature-grid {
@@ -322,6 +441,12 @@
   .feature-values {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .compare-coin-grid,
+  .compare-info-grid {
+    grid-template-columns: 1fr;
+  }
+
 }
 
 @media (max-width: 620px) {
@@ -350,5 +475,62 @@
   .dashboard-tools p {
     min-width: 0;
     text-align: left;
+  }
+
+  .compare-shell {
+    width: min(94%, 1180px);
+    margin-top: 1rem;
+  }
+
+  .compare-header h1 {
+    font-size: 1.55rem;
+    line-height: 1.2;
+  }
+
+  .compare-coin-card.grey-wrapper,
+  .compare-chart-panel.grey-wrapper,
+  .compare-info-grid .grey-wrapper {
+    padding: 0.85rem;
+  }
+
+  .compare-chart-box {
+    min-height: 260px;
+  }
+
+  .compare-coin-card .list-row {
+    align-items: center;
+    padding: 0.5rem 0;
+    gap: 0.45rem;
+  }
+
+  .compare-coin-card .td-img {
+    flex-basis: 2.25rem;
+    width: 2.25rem !important;
+  }
+
+  .compare-coin-card .td-info {
+    flex: 1 1 5.5rem;
+    min-width: 5.5rem;
+  }
+
+  .compare-coin-card .td-current-price {
+    flex: 0 1 5.8rem;
+    text-align: right !important;
+  }
+
+  .compare-coin-card .watchlist-cell {
+    flex-basis: 2rem;
+    width: 2rem !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .compare-page .td-current-price,
+  .compare-page .mobile {
+    display: none !important;
+  }
+
+  .compare-chart-box {
+    min-height: 230px;
   }
 }

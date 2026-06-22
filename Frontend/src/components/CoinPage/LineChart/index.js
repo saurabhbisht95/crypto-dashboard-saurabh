@@ -2,7 +2,7 @@ import React from "react";
 import { Line } from "react-chartjs-2";
 import "chart.js/auto";
 
-function LineChart({ chartData, multiAxis }) {
+function LineChart({ chartData, multiAxis, fillContainer = false }) {
   const hasData = chartData?.datasets?.some((dataset) => dataset.data?.length);
 
   const options = {
@@ -12,6 +12,7 @@ function LineChart({ chartData, multiAxis }) {
       },
     },
     responsive: true,
+    maintainAspectRatio: !fillContainer,
     interaction: {
       mode: "index",
       intersect: false,

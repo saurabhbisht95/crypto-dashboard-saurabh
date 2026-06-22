@@ -1,15 +1,54 @@
 .select-coins-div {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 1.5rem;
-  margin: 1.5rem 3rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 1rem;
+  width: 100%;
+  margin: 0 0 1.25rem;
+  padding: 1rem;
+  border: 1px solid rgba(58, 128, 233, 0.18);
+  border-radius: 8px;
+  background: var(--darkgrey);
 }
 
 .select-flex {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 1rem;
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.select-flex p,
+.select-days p {
+  margin: 0;
+  color: var(--grey);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.select-flex .MuiFormControl-root,
+.select-flex .MuiInputBase-root,
+.select-days .MuiFormControl-root,
+.select-days .MuiInputBase-root {
+  width: 100%;
+}
+
+.select-coins-div .select-days {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0 !important;
+}
+
+.select-coins-div .select-days::before {
+  content: "Time range";
+  color: var(--grey);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+@media only screen and (max-width: 820px) {
+  .select-coins-div {
+    grid-template-columns: 1fr;
+  }
 }

@@ -186,7 +186,7 @@ function Compare() {
   };
 
   return (
-    <div>
+    <div className="compare-page">
       <Header />
       {loading || (!error && (!coin1Data?.id || !coin2Data?.id)) ? (
         <Loader />
@@ -197,7 +197,19 @@ function Compare() {
           onAction={getComparisonData}
         />
       ) : (
-        <>
+        <main className="compare-shell">
+          <header className="feature-header compare-header">
+            <div>
+              <span className="feature-eyebrow">Compare markets</span>
+              <h1>
+                {coin1Data.name} vs {coin2Data.name}
+              </h1>
+              <p>
+                Compare live price movement, volume, market cap, and coin
+                details in one responsive view.
+              </p>
+            </div>
+          </header>
           <SelectCoins
             allCoins={allCoins}
             crypto1={crypto1}
@@ -206,13 +218,15 @@ function Compare() {
             days={days}
             handleDaysChange={handleDaysChange}
           />
-          <div className="grey-wrapper">
-            <List coin={coin1Data} />
-          </div>
-          <div className="grey-wrapper">
-            <List coin={coin2Data} />
-          </div>
-          <div className="grey-wrapper">
+          <section className="compare-coin-grid">
+            <div className="grey-wrapper compare-coin-card">
+              <List coin={coin1Data} />
+            </div>
+            <div className="grey-wrapper compare-coin-card">
+              <List coin={coin2Data} />
+            </div>
+          </section>
+          <section className="grey-wrapper compare-chart-panel">
             <ToggleComponents
               priceType={priceType}
               handlePriceTypeChange={handlePriceTypeChange}
@@ -222,11 +236,19 @@ function Compare() {
                 Live comparison: fresh backend price ticks append every 30 seconds.
               </p>
             )}
-            <LineChart chartData={chartData} multiAxis={true} />
-          </div>
-          <Info title={coin1Data.name} desc={coin1Data.desc} />
-          <Info title={coin2Data.name} desc={coin2Data.desc} />
-        </>
+            <div className="compare-chart-box">
+              <LineChart
+                chartData={chartData}
+                multiAxis={true}
+                fillContainer={true}
+              />
+            </div>
+          </section>
+          <section className="compare-info-grid">
+            <Info title={coin1Data.name} desc={coin1Data.desc} />
+            <Info title={coin2Data.name} desc={coin2Data.desc} />
+          </section>
+        </main>
       )}
     </div>
   );
