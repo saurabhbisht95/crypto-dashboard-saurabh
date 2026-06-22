@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 import { useAuth } from "../../../context/AuthContext";
 import { getApiMessage } from "../../../services/http";
 
-function List({ coin, delay }) {
+function List({ coin, delay, disableAnimation = false }) {
   const navigate = useNavigate();
   const {
     addToWatchlist,
@@ -52,10 +52,11 @@ function List({ coin, delay }) {
   return (
     <motion.tr
       className="list-row"
-      initial={{ opacity: 0, x: -50 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.35, delay }}
-      viewport={{ once: true, amount: 0.2 }}
+      initial={disableAnimation ? false : { opacity: 0, x: -50 }}
+      animate={disableAnimation ? { opacity: 1, x: 0 } : undefined}
+      whileInView={disableAnimation ? undefined : { opacity: 1, x: 0 }}
+      transition={disableAnimation ? undefined : { duration: 0.35, delay }}
+      viewport={disableAnimation ? undefined : { once: true, amount: 0.2 }}
       onClick={() => navigate(`/coin/${coin.id}`)}
     >
       <Tooltip title="Coin Image">

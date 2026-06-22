@@ -318,8 +318,15 @@
 }
 
 .compare-shell {
+  box-sizing: border-box;
   width: min(92%, 1180px);
   margin: 1.5rem auto 4rem;
+}
+
+.compare-shell *,
+.compare-shell *::before,
+.compare-shell *::after {
+  box-sizing: border-box;
 }
 
 .compare-header {
@@ -380,9 +387,125 @@
   line-height: 1.5;
 }
 
+.compare-list-table,
+.compare-list-table tbody {
+  display: block;
+  width: 100%;
+}
+
+.compare-coin-card .coin-image-td {
+  display: block;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.compare-coin-card .info-flex {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.2rem;
+}
+
+.compare-coin-card .coin-symbol {
+  margin: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.compare-coin-card .coin-name {
+  margin: 0;
+  color: var(--grey);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.compare-coin-card .chip-flex {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+}
+
+.compare-coin-card .price-chip {
+  border: 2px solid var(--green);
+  border-radius: 2rem;
+  padding: 0.25rem 1rem;
+  color: var(--green);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.compare-coin-card .chip-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+  border: 2px solid var(--green);
+  border-radius: 50%;
+  color: var(--green);
+}
+
+.compare-coin-card .price-chip:hover,
+.compare-coin-card .chip-icon:hover {
+  background-color: var(--green);
+  color: var(--white);
+  transition: all 0.3s;
+}
+
+.compare-coin-card .red {
+  border: 2px solid var(--red) !important;
+  color: var(--red);
+}
+
+.compare-coin-card .red:hover {
+  background-color: var(--red) !important;
+  color: var(--white) !important;
+  transition: all 0.3s;
+}
+
+.compare-coin-card .current-price,
+.compare-coin-card .current-price-red {
+  margin: 0;
+  color: var(--green);
+  font-size: 1.1rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.compare-coin-card .current-price-red {
+  color: var(--red) !important;
+}
+
+.compare-coin-card .watchlist-icon {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem !important;
+  height: 1.5rem;
+  padding: 0.5rem;
+  border: 2px solid var(--green);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--green);
+  cursor: pointer;
+}
+
+.compare-coin-card .watchlist-icon-red {
+  border: 2px solid var(--red);
+  color: var(--red);
+}
+
+.compare-coin-card .watchlist-icon:focus-visible {
+  outline: 3px solid rgba(58, 128, 233, 0.35);
+  outline-offset: 3px;
+}
+
 .compare-coin-card .list-row {
   width: 100%;
-  min-height: 5rem;
+  min-height: 4.75rem;
   padding: 0.85rem 0.75rem;
   margin: 0 !important;
   gap: 0.75rem;
@@ -525,9 +648,23 @@
 }
 
 @media (max-width: 430px) {
-  .compare-page .td-current-price,
   .compare-page .mobile {
     display: none !important;
+  }
+
+  .compare-coin-card .list-row {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+
+  .compare-page .td-current-price {
+    display: block !important;
+    flex: 0 0 calc(100% - 2.7rem);
+    order: 5;
+    margin-left: 2.7rem;
+    color: var(--grey);
+    font-size: 0.78rem !important;
+    text-align: left !important;
   }
 
   .compare-chart-box {

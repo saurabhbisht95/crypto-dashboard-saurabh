@@ -220,10 +220,18 @@ function Compare() {
           />
           <section className="compare-coin-grid">
             <div className="grey-wrapper compare-coin-card">
-              <List coin={coin1Data} />
+              <table className="compare-list-table">
+                <tbody>
+                  <List coin={coin1Data} disableAnimation={true} />
+                </tbody>
+              </table>
             </div>
             <div className="grey-wrapper compare-coin-card">
-              <List coin={coin2Data} />
+              <table className="compare-list-table">
+                <tbody>
+                  <List coin={coin2Data} disableAnimation={true} />
+                </tbody>
+              </table>
             </div>
           </section>
           <section className="grey-wrapper compare-chart-panel">
