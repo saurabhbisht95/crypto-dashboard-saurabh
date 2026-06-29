@@ -23,7 +23,7 @@ export const getSystemStatus = asyncHandler(async (req, res) => {
       cache: cache.stats(),
       liveMode: "polling",
       alertCheckIntervalMs: env.alertCheckIntervalMs,
-      coinGeckoApiKeyConfigured: Boolean(env.coinGeckoApiKey),
+      marketProvider: env.marketProvider,
       timestamp: new Date().toISOString(),
     })
   );

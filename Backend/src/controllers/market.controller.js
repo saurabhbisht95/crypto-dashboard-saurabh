@@ -14,7 +14,7 @@ import {
   getNftMarkets,
   getRecentlyAddedCoins,
   getTrendingSearch,
-} from "../services/coinGecko.service.js";
+} from "../services/coinLore.service.js";
 
 const FIAT_CURRENCIES = new Set([
   "usd",

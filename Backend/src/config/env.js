@@ -54,11 +54,11 @@ export const env = {
     shouldUseCrossSiteCookies || cookieSameSite === "none"
   ),
   cookieSameSite,
-  coinGeckoApiKey: process.env.COINGECKO_API_KEY || "",
+  marketProvider: process.env.MARKET_PROVIDER || "coinlore",
   alertCheckIntervalMs: Number(process.env.ALERT_CHECK_INTERVAL_MS) || 300000,
   marketFetchTimeoutMs: Number(process.env.MARKET_FETCH_TIMEOUT_MS) || 12000,
   marketProviderMinIntervalMs:
-    Number(process.env.MARKET_PROVIDER_MIN_INTERVAL_MS) || 2500,
+    Number(process.env.MARKET_PROVIDER_MIN_INTERVAL_MS) || 1000,
   marketStaleCacheTtlMs:
     Number(process.env.MARKET_STALE_CACHE_TTL_MS) || 60 * 60 * 1000,
 };

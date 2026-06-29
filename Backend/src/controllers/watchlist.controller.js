@@ -1,7 +1,7 @@
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { getMarketCoins } from "../services/coinGecko.service.js";
+import { getMarketCoins } from "../services/coinLore.service.js";
 
 const getWatchlistPayload = async (user) => {
   const ids = user.watchlist || [];

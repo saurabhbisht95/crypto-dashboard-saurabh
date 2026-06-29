@@ -1,6 +1,6 @@
 import { Alert } from "../models/Alert.model.js";
 import { env } from "../config/env.js";
-import { getSimplePrices } from "./coinGecko.service.js";
+import { getSimplePrices } from "./coinLore.service.js";
 
 const isAlertTriggered = (alert, currentPrice) => {
   if (alert.direction === "above") {

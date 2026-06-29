@@ -88,8 +88,8 @@ function SystemStatus() {
               <strong>{Math.round(status.alertCheckIntervalMs / 1000)}s</strong>
             </div>
             <div>
-              <span>CoinGecko key</span>
-              <strong>{status.coinGeckoApiKeyConfigured ? "Configured" : "Demo mode"}</strong>
+              <span>Market provider</span>
+              <strong>{status.marketProvider || "coinlore"}</strong>
             </div>
             <div>
               <span>Cache provider</span>

@@ -1,4 +1,4 @@
-import { getMarketCoins } from "./coinGecko.service.js";
+import { getMarketCoins } from "./coinLore.service.js";
 
 export const enrichHoldings = async (holdings) => {
   const coinIds = [...new Set(holdings.map((holding) => holding.coinId))];
