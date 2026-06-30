@@ -1,27 +1,41 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700&display=swap");
 
 :root {
-  --white: #fff;
-  --black: #111;
-  --blue: #3a80e9;
-  --grey: #888;
-  --darkgrey: #1b1b1b;
-  --green: #61c96f;
-  --red: #f94141;
+  --white: #f5f7fb;
+  --black: #07090f;
+  --blue: #4f8cff;
+  --grey: #8f99aa;
+  --darkgrey: #101620;
+  --green: #16c784;
+  --red: #ea3943;
+  --surface: #0c1118;
+  --surface-2: #151d28;
+  --border: rgba(148, 163, 184, 0.18);
+  --shadow: rgba(0, 0, 0, 0.28);
+  --amber: #f5b841;
+  --cyan: #31d0aa;
 }
 
 [data-theme="dark"] {
-  --white: #ffffff;
-  --black: #111;
-  --grey: #888;
-  --darkgrey: #1b1b1b;
+  --white: #f5f7fb;
+  --black: #07090f;
+  --grey: #8f99aa;
+  --darkgrey: #101620;
+  --surface: #0c1118;
+  --surface-2: #151d28;
+  --border: rgba(148, 163, 184, 0.18);
+  --shadow: rgba(0, 0, 0, 0.28);
 }
 
 [data-theme="light"] {
-  --white: #111;
-  --black: #fff;
-  --grey: #888;
-  --darkgrey: #f3f3f3;
+  --white: #111827;
+  --black: #f7f9fc;
+  --grey: #667085;
+  --darkgrey: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #eef3f8;
+  --border: rgba(15, 23, 42, 0.12);
+  --shadow: rgba(15, 23, 42, 0.12);
 }
 
 html {
@@ -34,8 +48,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--black);
-
+  color: var(--white);
   overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 h1,
@@ -51,7 +69,7 @@ span {
 
 ::selection {
   background-color: var(--blue);
-  color: var(--white);
+  color: #fff;
 }
 
 ::-webkit-scrollbar {

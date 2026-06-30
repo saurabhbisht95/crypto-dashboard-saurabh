@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import Button from "../Button";
 import TemporaryDrawer from "./drawer";
 import "./styles.css";
@@ -8,20 +8,34 @@ import { toast } from "react-toastify";
 import { getStorageValue, setStorageValue } from "../../../functions/storage";
 import { useAuth } from "../../../context/AuthContext";
 
+const coreLinks = [
+  { label: "Home", to: "/" },
+  { label: "Compare", to: "/compare" },
+  { label: "Discover", to: "/discover" },
+  { label: "Screener", to: "/screener" },
+  { label: "Convert", to: "/converter" },
+];
+
+const authLinks = [
+  { label: "Portfolio", to: "/portfolio" },
+  { label: "Alerts", to: "/alerts" },
+  { label: "Watchlist", to: "/watchlist" },
+];
+
 function Header() {
   const { isAuthenticated, logout, user } = useAuth();
   const firstName = user?.name?.split(" ")?.[0];
   const accountMenuRef = useRef(null);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(
-    getStorageValue("theme") === "dark" ? true : false
+    getStorageValue("theme") !== "light"
   );
 
   useEffect(() => {
-    if (getStorageValue("theme") === "dark") {
-      setDark();
-    } else {
+    if (getStorageValue("theme") === "light") {
       setLight();
+    } else {
+      setDark();
     }
   }, []);
 
@@ -41,10 +55,10 @@ function Header() {
   }, []);
 
   const changeMode = () => {
-    if (getStorageValue("theme") !== "dark") {
-      setDark();
-    } else {
+    if (getStorageValue("theme") === "dark") {
       setLight();
+    } else {
+      setDark();
     }
     setDarkMode(!darkMode);
     toast.success("Theme Changed!");
@@ -67,42 +81,30 @@ function Header() {
   };
 
   return (
-    <div className="header">
+    <header className="header">
       <h1>
         CryptoTracker<span style={{ color: "var(--blue)" }}>.</span>
       </h1>
-      <div className="links">
-        <Switch checked={darkMode} onClick={() => changeMode()} />
-        <Link to="/">
-          <p className="link">Home</p>
-        </Link>
-        <Link to="/compare">
-          <p className="link">Compare</p>
-        </Link>
-        <Link to="/discover">
-          <p className="link">Discover</p>
-        </Link>
-        <Link to="/screener">
-          <p className="link">Screener</p>
-        </Link>
-        <Link to="/converter">
-          <p className="link">Convert</p>
-        </Link>
-        {isAuthenticated && (
-          <>
-            <Link to="/portfolio">
-              <p className="link">Portfolio</p>
-            </Link>
-            <Link to="/alerts">
-              <p className="link">Alerts</p>
-            </Link>
-            <Link to="/watchlist">
-              <p className="link">Watchlist</p>
-            </Link>
-          </>
-        )}
+      <nav className="links" aria-label="Primary navigation">
+        <Switch
+          checked={darkMode}
+          onClick={() => changeMode()}
+          inputProps={{ "aria-label": "Toggle color theme" }}
+        />
+        {[...coreLinks, ...(isAuthenticated ? authLinks : [])].map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
+            className={({ isActive }) =>
+              `link ${isActive ? "active-link" : ""}`
+            }
+          >
+            {item.label}
+          </NavLink>
+        ))}
         <Link to="/dashboard">
-          <Button text={"dashboard"} />
+          <Button text="Dashboard" />
         </Link>
         {isAuthenticated ? (
           <div className="account-menu" ref={accountMenuRef}>
@@ -128,11 +130,11 @@ function Header() {
             <Button text={"login"} />
           </Link>
         )}
-      </div>
+      </nav>
       <div className="drawer-component">
         <TemporaryDrawer />
       </div>
-    </div>
+    </header>
   );
 }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import Drawer from "@mui/material/Drawer";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import { IconButton } from "@mui/material";
@@ -8,28 +8,45 @@ import { toast } from "react-toastify";
 import { getStorageValue, setStorageValue } from "../../../functions/storage";
 import { useAuth } from "../../../context/AuthContext";
 
+const coreLinks = [
+  { label: "Home", to: "/" },
+  { label: "Compare", to: "/compare" },
+  { label: "Discover", to: "/discover" },
+  { label: "Screener", to: "/screener" },
+  { label: "Exchanges", to: "/exchanges" },
+  { label: "NFTs", to: "/nfts" },
+  { label: "Converter", to: "/converter" },
+  { label: "Dashboard", to: "/dashboard" },
+];
+
+const authLinks = [
+  { label: "Portfolio", to: "/portfolio" },
+  { label: "Alerts", to: "/alerts" },
+  { label: "Watchlist", to: "/watchlist" },
+];
+
 export default function TemporaryDrawer() {
   const { isAuthenticated, logout, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [showAccountActions, setShowAccountActions] = useState(false);
   const firstName = user?.name?.split(" ")?.[0];
   const [darkMode, setDarkMode] = useState(
-    getStorageValue("theme") === "dark" ? true : false
+    getStorageValue("theme") !== "light"
   );
 
   useEffect(() => {
-    if (getStorageValue("theme") === "dark") {
-      setDark();
-    } else {
+    if (getStorageValue("theme") === "light") {
       setLight();
+    } else {
+      setDark();
     }
   }, []);
 
   const changeMode = () => {
-    if (getStorageValue("theme") !== "dark") {
-      setDark();
-    } else {
+    if (getStorageValue("theme") === "dark") {
       setLight();
+    } else {
+      setDark();
     }
     setDarkMode(!darkMode);
     toast.success("Theme Changed!");
@@ -65,60 +82,41 @@ export default function TemporaryDrawer() {
         }}
       >
         <div className="drawer-div">
-          <Link to="/" onClick={() => setOpen(false)}>
-            <p className="link">Home</p>
-          </Link>
-          <Link to="/compare" onClick={() => setOpen(false)}>
-            <p className="link">Compare</p>
-          </Link>
-          <Link to="/discover" onClick={() => setOpen(false)}>
-            <p className="link">Discover</p>
-          </Link>
-          <Link to="/screener" onClick={() => setOpen(false)}>
-            <p className="link">Screener</p>
-          </Link>
-          <Link to="/exchanges" onClick={() => setOpen(false)}>
-            <p className="link">Exchanges</p>
-          </Link>
-          <Link to="/nfts" onClick={() => setOpen(false)}>
-            <p className="link">NFTs</p>
-          </Link>
-          <Link to="/converter" onClick={() => setOpen(false)}>
-            <p className="link">Converter</p>
-          </Link>
-          {isAuthenticated && (
-            <>
-              <Link to="/portfolio" onClick={() => setOpen(false)}>
-                <p className="link">Portfolio</p>
-              </Link>
-              <Link to="/alerts" onClick={() => setOpen(false)}>
-                <p className="link">Alerts</p>
-              </Link>
-              <Link to="/watchlist" onClick={() => setOpen(false)}>
-                <p className="link">Watchlist</p>
-              </Link>
-            </>
-          )}
-          <Link to="/dashboard" onClick={() => setOpen(false)}>
-            <p className="link">Dashboard</p>
-          </Link>
+          {[...coreLinks, ...(isAuthenticated ? authLinks : [])].map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `link drawer-link ${isActive ? "active-link" : ""}`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
           {isAuthenticated ? (
             <>
-              <p
-                className="link"
+              <button
+                type="button"
+                className="link drawer-link drawer-action"
                 onClick={() => setShowAccountActions((isVisible) => !isVisible)}
               >
                 {firstName || "Account"}
-              </p>
+              </button>
               {showAccountActions && (
-                <p className="link" onClick={handleLogout}>
+                <button
+                  type="button"
+                  className="link drawer-link drawer-action"
+                  onClick={handleLogout}
+                >
                   Logout
-                </p>
+                </button>
               )}
             </>
           ) : (
             <Link to="/login" onClick={() => setOpen(false)}>
-              <p className="link">Login</p>
+              <span className="link drawer-link">Login</span>
             </Link>
           )}
           <Switch checked={darkMode} onClick={() => changeMode()} />

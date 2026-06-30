@@ -33,6 +33,10 @@ const compactCurrency = new Intl.NumberFormat("en-US", {
 });
 
 const buildMarketSummary = (marketCoins) => {
+  if (!marketCoins.length) {
+    return null;
+  }
+
   const sortedByChange = [...marketCoins].sort(
     (a, b) =>
       (b.price_change_percentage_24h || 0) -
@@ -48,10 +52,22 @@ const buildMarketSummary = (marketCoins) => {
   );
   const bitcoinMarketCap =
     marketCoins.find((coin) => coin.id === "bitcoin")?.market_cap || 0;
+  const advancing = marketCoins.filter(
+    (coin) => (coin.price_change_percentage_24h || 0) >= 0
+  ).length;
+  const declining = marketCoins.length - advancing;
+  const averageChange =
+    marketCoins.reduce(
+      (sum, coin) => sum + (coin.price_change_percentage_24h || 0),
+      0
+    ) / marketCoins.length;
 
   return {
     marketCap,
     volume24h,
+    advancing,
+    declining,
+    averageChange,
     topGainers: sortedByChange.slice(0, 5),
     topLosers: sortedByChange.slice(-5).reverse(),
     bitcoinDominance:
@@ -61,13 +77,14 @@ const buildMarketSummary = (marketCoins) => {
 
 function Dashboard() {
   const [coins, setCoins] = useState([]);
-  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [shouldLoadInsights, setShouldLoadInsights] = useState(false);
   const deferredSearch = useDeferredValue(search);
+  const summary = useMemo(() => buildMarketSummary(coins), [coins]);
+  const liveStripCoins = useMemo(() => coins.slice(0, 5), [coins]);
 
   useEffect(() => {
     let isActive = true;
@@ -90,7 +107,6 @@ function Dashboard() {
       const marketCoins = Array.isArray(response) ? response : [];
 
       setCoins(marketCoins);
-      setSummary(buildMarketSummary(marketCoins));
       setPage(1);
     } catch (err) {
       if (!isActive()) return;
@@ -123,21 +139,34 @@ function Dashboard() {
     );
   }, [coins, normalizedSearch]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [normalizedSearch]);
+
   const handlePageChange = (event, value) => {
     setPage(value);
   };
 
-  const pageCount = Math.max(1, Math.ceil(coins.length / 10));
+  const pageCount = Math.max(1, Math.ceil(filteredCoins.length / 10));
   const initialCount = (page - 1) * 10;
-  const paginatedCoins = useMemo(
-    () => coins.slice(initialCount, initialCount + 10),
-    [coins, initialCount]
+  const visibleCoins = useMemo(
+    () => filteredCoins.slice(initialCount, initialCount + 10),
+    [filteredCoins, initialCount]
   );
+
+  useEffect(() => {
+    if (page > pageCount) {
+      setPage(pageCount);
+    }
+  }, [page, pageCount]);
+
   const isSearching = Boolean(normalizedSearch);
-  const visibleCoins = isSearching ? filteredCoins : paginatedCoins;
+  const rangeStart = filteredCoins.length ? initialCount + 1 : 0;
+  const rangeEnd = Math.min(initialCount + visibleCoins.length, filteredCoins.length);
   const resultLabel = isSearching
-    ? `${filteredCoins.length} matches for "${deferredSearch.trim()}"`
-    : `${coins.length} assets tracked`;
+    ? `matches for "${deferredSearch.trim()}"`
+    : "assets tracked";
+  const showingLabel = `${rangeStart}-${rangeEnd} of ${filteredCoins.length}`;
 
   useEffect(() => {
     if (loading || error || isSearching) {
@@ -173,21 +202,40 @@ function Dashboard() {
         />
       ) : (
         <>
-          <LiveMarketStrip />
+          <LiveMarketStrip marketCoins={liveStripCoins} />
           <section className="feature-shell dashboard-overview">
-            <div className="feature-header dashboard-heading">
+            <div className="dashboard-hero">
               <div>
                 <span className="feature-eyebrow">Markets</span>
-                <h1>Market dashboard</h1>
+                <h1>Professional crypto market dashboard</h1>
                 <p>
-                  Scan live prices, market breadth, and momentum across the top
-                  crypto assets.
+                  Real-time market breadth, liquidity, momentum, and watchlist
+                  actions in a focused trading workspace.
                 </p>
               </div>
-              <div className="dashboard-stat-pill" aria-label={resultLabel}>
-                <span>Showing</span>
-                <strong>{visibleCoins.length}</strong>
-                <small>{isSearching ? "matches" : `of ${coins.length}`}</small>
+              <div className="dashboard-session-card">
+                <div className="session-card-header">
+                  <span>Session</span>
+                  <strong>Spot Market</strong>
+                </div>
+                <div className="session-row">
+                  <span>Advancers</span>
+                  <strong className="positive">{summary?.advancing || 0}</strong>
+                </div>
+                <div className="session-row">
+                  <span>Decliners</span>
+                  <strong className="negative">{summary?.declining || 0}</strong>
+                </div>
+                <div className="session-row">
+                  <span>Avg 24h Move</span>
+                  <strong
+                    className={
+                      (summary?.averageChange || 0) < 0 ? "negative" : "positive"
+                    }
+                  >
+                    {(summary?.averageChange || 0).toFixed(2)}%
+                  </strong>
+                </div>
               </div>
             </div>
           </section>
@@ -218,15 +266,31 @@ function Dashboard() {
                     </span>
                   </strong>
                 </div>
+                <div className="metric-card">
+                  <span>Top Loser</span>
+                  <strong>
+                    {summary.topLosers?.[0]?.symbol?.toUpperCase() || "-"}{" "}
+                    <span className="negative">
+                      {summary.topLosers?.[0]?.price_change_percentage_24h?.toFixed(
+                        2
+                      ) || "0.00"}
+                      %
+                    </span>
+                  </strong>
+                </div>
               </div>
             </section>
           )}
           <section className="dashboard-tools" aria-label="Dashboard filters">
             <Search search={search} handleChange={handleChange} />
-            <p>{resultLabel}</p>
+            <div className="dashboard-result-copy">
+              <strong>{showingLabel}</strong>
+              {" "}
+              <span>{resultLabel}</span>
+            </div>
           </section>
           <TabsComponent coins={visibleCoins} setSearch={setSearch} />
-          {!isSearching && (
+          {filteredCoins.length > 10 && (
             <PaginationComponent
               page={page}
               count={pageCount}

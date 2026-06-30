@@ -7,7 +7,7 @@
   min-width: 86px;
   min-height: 2.35rem;
   padding: 0.45rem 1.25rem;
-  border-radius: 3rem;
+  border-radius: 8px;
   font: inherit;
   font-weight: 700;
   font-size: 0.82rem;
@@ -27,7 +27,7 @@
 
 .btn:hover,
 .btn:focus-visible {
-  box-shadow: 2px 2px 10px rgba(58, 128, 233, 0.5);
+  box-shadow: 0 10px 24px rgba(79, 140, 255, 0.28);
   transform: translateY(-1px);
 }
 

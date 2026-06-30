@@ -35,13 +35,13 @@ export default function TabsComponent({ coins, setSearch }) {
 
   return (
     <TabContext value={value}>
-      <div style={{ borderBottom: 1, borderColor: "divider" }}>
+      <div className="dashboard-tabs-bar">
         <TabList onChange={handleChange} variant="fullWidth">
           <Tab label="Grid" value="grid" sx={style} />
           <Tab label="List" value="list" sx={style} />
         </TabList>
       </div>
-      <TabPanel value="grid">
+      <TabPanel value="grid" sx={{ padding: "1rem 0" }}>
         <div className="grid-flex">
           {coins.length > 0 ? (
             coins.map((coin, i) => (
@@ -52,7 +52,7 @@ export default function TabsComponent({ coins, setSearch }) {
           )}
         </div>
       </TabPanel>
-      <TabPanel value="list">
+      <TabPanel value="list" sx={{ padding: "1rem 0" }}>
         {coins.length > 0 ? (
           <table className="list-flex">
             <tbody>

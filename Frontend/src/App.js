@@ -28,9 +28,17 @@ const Watchlist = lazy(() => import("./pages/Watchlist"));
 
 const theme = createTheme({
   palette: {
+    mode: "dark",
     primary: {
-      main: "#3a80e9",
+      main: "#4f8cff",
     },
+    background: {
+      default: "#07090f",
+      paper: "#101620",
+    },
+  },
+  typography: {
+    fontFamily: "Inter, sans-serif",
   },
 });
 
