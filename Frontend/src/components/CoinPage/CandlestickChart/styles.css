@@ -1,0 +1,74 @@
+.candlestick-chart {
+  width: 100%;
+}
+
+.candlestick-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 0.9rem;
+}
+
+.candlestick-toolbar > div:first-child {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.candlestick-toolbar strong {
+  color: var(--white);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+}
+
+.candlestick-toolbar span {
+  color: var(--grey);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.candlestick-ohlc {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  text-align: right;
+}
+
+.candlestick-ohlc .positive {
+  color: var(--green);
+}
+
+.candlestick-ohlc .negative {
+  color: var(--red);
+}
+
+.candlestick-canvas {
+  display: block;
+  width: 100%;
+  height: clamp(340px, 52vw, 520px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: crosshair;
+}
+
+.candlestick-empty {
+  margin: 2rem 0;
+  color: var(--grey);
+  text-align: center;
+}
+
+@media (max-width: 680px) {
+  .candlestick-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .candlestick-ohlc {
+    justify-content: flex-start;
+    text-align: left;
+  }
+}

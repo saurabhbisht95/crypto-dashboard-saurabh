@@ -13,16 +13,23 @@ import { getCoinData } from "../functions/getCoinData";
 import { getPrices } from "../functions/getPrices";
 import { settingChartData } from "../functions/settingChartData";
 import { settingCoinObject } from "../functions/settingCoinObject";
+import {
+  getUnsupportedBinanceMarkets,
+  subscribeToBinanceTickers,
+} from "../services/binanceMarketStream";
 import { marketService } from "../services/marketService";
 import "./FeaturePages.css";
 
 const isLivePrice = (price) => Number.isFinite(Number(price));
+const LIVE_CHART_POINTS = 180;
+const MIN_CHART_UPDATE_MS = 1000;
 
 function Compare() {
   const [allCoins, setAllCoins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const requestIdRef = useRef(0);
+  const liveComparisonRef = useRef({});
   // id states
   const [crypto1, setCrypto1] = useState("bitcoin");
   const [crypto2, setCrypto2] = useState("ethereum");
@@ -97,68 +104,178 @@ function Compare() {
   }, [getComparisonData]);
 
   useEffect(() => {
+    liveComparisonRef.current = {
+      [crypto1]: {
+        price: coin1Data.current_price,
+        change24h: coin1Data.price_change_percentage_24h,
+      },
+      [crypto2]: {
+        price: coin2Data.current_price,
+        change24h: coin2Data.price_change_percentage_24h,
+      },
+    };
+  }, [
+    coin1Data.current_price,
+    coin1Data.price_change_percentage_24h,
+    coin2Data.current_price,
+    coin2Data.price_change_percentage_24h,
+    crypto1,
+    crypto2,
+  ]);
+
+  useEffect(() => {
     if (!coin1Data?.id || !coin2Data?.id || priceType !== "prices" || error) {
       return undefined;
     }
 
     let isActive = true;
+    let fallbackIntervalId;
+    let fallbackTimeoutId;
+    let lastChartUpdateAt = 0;
+    const liveMarkets = [crypto1, crypto2];
+    const unsupportedMarkets = getUnsupportedBinanceMarkets(liveMarkets);
+
+    const stopFallbackPolling = () => {
+      window.clearInterval(fallbackIntervalId);
+      fallbackIntervalId = undefined;
+    };
+
+    const appendComparisonPoint = () => {
+      const price1 = liveComparisonRef.current[crypto1]?.price;
+      const price2 = liveComparisonRef.current[crypto2]?.price;
+
+      if (!isLivePrice(price1) || !isLivePrice(price2)) return;
+
+      setChartData((currentChart) => {
+        if (currentChart.datasets?.length < 2) {
+          return currentChart;
+        }
+
+        return {
+          labels: [
+            ...currentChart.labels.slice(-(LIVE_CHART_POINTS - 1)),
+            new Date().toLocaleTimeString(),
+          ],
+          datasets: [
+            {
+              ...currentChart.datasets[0],
+              data: [
+                ...currentChart.datasets[0].data.slice(
+                  -(LIVE_CHART_POINTS - 1)
+                ),
+                price1,
+              ],
+            },
+            {
+              ...currentChart.datasets[1],
+              data: [
+                ...currentChart.datasets[1].data.slice(
+                  -(LIVE_CHART_POINTS - 1)
+                ),
+                price2,
+              ],
+            },
+          ],
+        };
+      });
+    };
+
+    const applyLivePrice = (coinId, livePrice, change24h) => {
+      if (!isActive || !isLivePrice(livePrice)) return;
+
+      liveComparisonRef.current = {
+        ...liveComparisonRef.current,
+        [coinId]: {
+          price: livePrice,
+          change24h:
+            change24h ?? liveComparisonRef.current[coinId]?.change24h,
+        },
+      };
+
+      if (coinId === crypto1) {
+        setCoin1Data((currentCoin) => ({
+          ...currentCoin,
+          current_price: livePrice,
+          price_change_percentage_24h:
+            change24h ?? currentCoin.price_change_percentage_24h,
+        }));
+      }
+
+      if (coinId === crypto2) {
+        setCoin2Data((currentCoin) => ({
+          ...currentCoin,
+          current_price: livePrice,
+          price_change_percentage_24h:
+            change24h ?? currentCoin.price_change_percentage_24h,
+        }));
+      }
+
+      const now = Date.now();
+
+      if (now - lastChartUpdateAt < MIN_CHART_UPDATE_MS) return;
+
+      lastChartUpdateAt = now;
+      appendComparisonPoint();
+    };
 
     const appendLivePrices = async () => {
       try {
         const data = await marketService.getLivePrices([crypto1, crypto2]);
         const price1 = data.prices?.[crypto1]?.usd;
         const price2 = data.prices?.[crypto2]?.usd;
+        const change1 = data.prices?.[crypto1]?.usd_24h_change;
+        const change2 = data.prices?.[crypto2]?.usd_24h_change;
 
-        if (!isActive || !isLivePrice(price1) || !isLivePrice(price2)) return;
-
-        setCoin1Data((currentCoin) => ({
-          ...currentCoin,
-          current_price: price1,
-          price_change_percentage_24h:
-            data.prices?.[crypto1]?.usd_24h_change ??
-            currentCoin.price_change_percentage_24h,
-        }));
-        setCoin2Data((currentCoin) => ({
-          ...currentCoin,
-          current_price: price2,
-          price_change_percentage_24h:
-            data.prices?.[crypto2]?.usd_24h_change ??
-            currentCoin.price_change_percentage_24h,
-        }));
-
-        setChartData((currentChart) => {
-          if (currentChart.datasets?.length < 2) {
-            return currentChart;
-          }
-
-          return {
-            labels: [
-              ...currentChart.labels.slice(-89),
-              new Date().toLocaleTimeString(),
-            ],
-            datasets: [
-              {
-                ...currentChart.datasets[0],
-                data: [...currentChart.datasets[0].data.slice(-89), price1],
-              },
-              {
-                ...currentChart.datasets[1],
-                data: [...currentChart.datasets[1].data.slice(-89), price2],
-              },
-            ],
-          };
-        });
+        applyLivePrice(crypto1, price1, change1);
+        applyLivePrice(crypto2, price2, change2);
       } catch {
         // Keep the current comparison chart if a live tick misses.
       }
     };
 
-    appendLivePrices();
-    const intervalId = setInterval(appendLivePrices, 30000);
+    const startFallbackPolling = (runImmediately = false) => {
+      if (fallbackIntervalId) return;
+      if (runImmediately) {
+        appendLivePrices();
+      }
+      fallbackIntervalId = window.setInterval(appendLivePrices, 30000);
+    };
+
+    const stopStream = subscribeToBinanceTickers(
+      liveMarkets,
+      (tick) => {
+        window.clearTimeout(fallbackTimeoutId);
+
+        if (!unsupportedMarkets.length) {
+          stopFallbackPolling();
+        }
+
+        applyLivePrice(tick.id, tick.price, tick.changePercent24h);
+      },
+      {
+        onStatus: (status) => {
+          if (["unsupported", "error", "disconnected"].includes(status)) {
+            startFallbackPolling(true);
+          }
+        },
+      }
+    );
+
+    if (unsupportedMarkets.length) {
+      startFallbackPolling(true);
+    }
+
+    if (unsupportedMarkets.length < liveMarkets.length) {
+      fallbackTimeoutId = window.setTimeout(() => {
+        startFallbackPolling(true);
+      }, 7000);
+    }
 
     return () => {
       isActive = false;
-      clearInterval(intervalId);
+      window.clearTimeout(fallbackTimeoutId);
+      stopFallbackPolling();
+      stopStream();
     };
   }, [coin1Data?.id, coin2Data?.id, crypto1, crypto2, error, priceType]);
 
@@ -241,7 +358,8 @@ function Compare() {
             />
             {priceType === "prices" && (
               <p className="feature-muted" style={{ textAlign: "center" }}>
-                Live comparison: fresh backend price ticks append every 30 seconds.
+                Live comparison: Binance stream ticks update supported markets
+                every second.
               </p>
             )}
             <div className="compare-chart-box">

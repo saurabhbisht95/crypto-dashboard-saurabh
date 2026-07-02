@@ -4,6 +4,7 @@ import {
   getCoinAdvancedDetails,
   getCoinById,
   getCoinChart,
+  getCoinOhlcChart,
   getCoins,
   getExchangeRankings,
   getLiveMarketPrices,
@@ -32,7 +33,8 @@ router.get("/live-prices", getLiveMarketPrices);
 router.get("/heatmap", getMarketHeatmap);
 router.get("/intelligence", getMarketIntelligence);
 router.get("/coins/:coinId/advanced", getCoinAdvancedDetails);
-router.get("/coins/:coinId", getCoinById);
 router.get("/coins/:coinId/chart", getCoinChart);
+router.get("/coins/:coinId/ohlc", getCoinOhlcChart);
+router.get("/coins/:coinId", getCoinById);
 
 export default router;

@@ -12,6 +12,11 @@ export const marketService = {
       .get(`/market/coins/${coinId}/chart`, { params })
       .then((res) => res.data.data.chart);
   },
+  getCoinOhlc(coinId, params = {}) {
+    return http
+      .get(`/market/coins/${coinId}/ohlc`, { params })
+      .then((res) => res.data.data.ohlc);
+  },
   getSummary() {
     return http.get("/market/summary").then((res) => res.data.data);
   },

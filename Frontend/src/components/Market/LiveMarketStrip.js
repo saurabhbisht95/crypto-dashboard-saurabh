@@ -1,4 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  getUnsupportedBinanceMarkets,
+  subscribeToBinanceTickers,
+} from "../../services/binanceMarketStream";
 import { marketService } from "../../services/marketService";
 import "./MarketWidgets.css";
 
@@ -67,6 +71,7 @@ function LiveMarketStrip({ ids = DEFAULT_IDS, marketCoins = EMPTY_MARKET_COINS }
   useEffect(() => {
     let isActive = true;
     const idsToPoll = stableIds.split(",").filter(Boolean);
+    const unsupportedMarkets = getUnsupportedBinanceMarkets(marketTiles);
 
     if (!idsToPoll.length) {
       return undefined;
@@ -85,7 +90,34 @@ function LiveMarketStrip({ ids = DEFAULT_IDS, marketCoins = EMPTY_MARKET_COINS }
       }
     };
 
-    if (!hasInitialPrices) {
+    const stopStream = subscribeToBinanceTickers(
+      marketTiles,
+      (tick) => {
+        if (!isActive) return;
+
+        setPrices((currentPrices) => ({
+          ...currentPrices,
+          [tick.id]: {
+            ...currentPrices[tick.id],
+            usd: tick.price,
+            usd_24h_change:
+              tick.changePercent24h ??
+              currentPrices[tick.id]?.usd_24h_change,
+            usd_24h_vol: tick.quoteVolume ?? currentPrices[tick.id]?.usd_24h_vol,
+          },
+        }));
+        setUpdatedAt(new Date(tick.eventTime).toLocaleTimeString());
+      },
+      {
+        onStatus: (status) => {
+          if (["unsupported", "error", "disconnected"].includes(status)) {
+            loadLivePrices();
+          }
+        },
+      }
+    );
+
+    if (!hasInitialPrices || unsupportedMarkets.length) {
       loadLivePrices();
     }
 
@@ -94,8 +126,9 @@ function LiveMarketStrip({ ids = DEFAULT_IDS, marketCoins = EMPTY_MARKET_COINS }
     return () => {
       isActive = false;
       clearInterval(intervalId);
+      stopStream();
     };
-  }, [hasInitialPrices, stableIds]);
+  }, [hasInitialPrices, marketTiles, stableIds]);
 
   return (
     <section className="live-strip" aria-live="polite">

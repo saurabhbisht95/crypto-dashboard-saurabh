@@ -106,6 +106,13 @@ export const getCoinChart = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, { chart: data }));
 });
 
+export const getCoinOhlcChart = asyncHandler(async (req, res) => {
+  const days = Number(req.query.days) || 30;
+  const ohlc = await getCoinOhlc(req.params.coinId, days);
+
+  return res.status(200).json(new ApiResponse(200, { ohlc }));
+});
+
 export const getCoinAdvancedDetails = asyncHandler(async (req, res) => {
   const coin = await getCoinAdvanced(req.params.coinId);
   const [ohlcResult, categoriesResult] = await Promise.allSettled([
