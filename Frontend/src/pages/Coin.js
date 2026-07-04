@@ -28,6 +28,15 @@ import "./FeaturePages.css";
 
 const isLivePrice = (price) => Number.isFinite(Number(price));
 const LIVE_CHART_POINTS = 180;
+const CANDLE_INTERVALS = ["1m", "5m", "15m", "1h", "4h", "1d"];
+const CANDLE_INTERVAL_CONFIG = {
+  "1m": { candlesPerDay: 1440 },
+  "5m": { candlesPerDay: 288 },
+  "15m": { candlesPerDay: 96 },
+  "1h": { candlesPerDay: 24 },
+  "4h": { candlesPerDay: 6 },
+  "1d": { candlesPerDay: 1 },
+};
 const CANDLE_SETTINGS_BY_DAYS = [
   { maxDays: 7, interval: "15m", candlesPerDay: 96 },
   { maxDays: 30, interval: "1h", candlesPerDay: 24 },
@@ -36,14 +45,26 @@ const CANDLE_SETTINGS_BY_DAYS = [
   { maxDays: Infinity, interval: "1d", candlesPerDay: 1 },
 ];
 
-const getCandleSettings = (days) => {
+const getDefaultCandleInterval = (days) => {
   const selectedDays = Number(days) || 30;
   const setting = CANDLE_SETTINGS_BY_DAYS.find(
     (item) => selectedDays <= item.maxDays
   );
 
+  return setting.interval;
+};
+
+const getCandleSettings = (days, interval = getDefaultCandleInterval(days)) => {
+  const selectedDays = Number(days) || 30;
+  const selectedInterval = CANDLE_INTERVAL_CONFIG[interval]
+    ? interval
+    : getDefaultCandleInterval(days);
+  const setting =
+    CANDLE_INTERVAL_CONFIG[selectedInterval] ||
+    CANDLE_INTERVAL_CONFIG[getDefaultCandleInterval(days)];
+
   return {
-    interval: setting.interval,
+    interval: selectedInterval,
     limit: Math.min(
       Math.max(Math.ceil(selectedDays * setting.candlesPerDay), 120),
       1000
@@ -110,8 +131,8 @@ const updateLatestCandlePrice = (candles, price) => {
   return [...candles.slice(0, -1), updated];
 };
 
-const loadCandleData = async (coinId, days) => {
-  const settings = getCandleSettings(days);
+const loadCandleData = async (coinId, days, interval) => {
+  const settings = getCandleSettings(days, interval);
 
   try {
     const binanceCandles = await getBinanceCandles(coinId, settings);
@@ -145,9 +166,13 @@ function Coin() {
   const [candleMeta, setCandleMeta] = useState({
     source: "Binance",
     interval: "1h",
+    liveTickAt: 0,
   });
   const [coin, setCoin] = useState({});
   const [days, setDays] = useState(30);
+  const [candleInterval, setCandleInterval] = useState(
+    getDefaultCandleInterval(30)
+  );
   const [priceType, setPriceType] = useState("prices");
   const requestIdRef = useRef(0);
 
@@ -162,7 +187,9 @@ function Coin() {
       const [coinData, prices, candlesResult] = await Promise.all([
         getCoinData(id),
         shouldUseCandles ? Promise.resolve([]) : getPrices(id, days, priceType),
-        shouldUseCandles ? loadCandleData(id, days) : Promise.resolve(null),
+        shouldUseCandles
+          ? loadCandleData(id, days, candleInterval)
+          : Promise.resolve(null),
       ]);
 
       if (requestId !== requestIdRef.current) return;
@@ -176,7 +203,10 @@ function Coin() {
         setCandleData(candlesResult?.candles || []);
         setCandleMeta({
           source: candlesResult?.source || "Backend OHLC",
-          interval: candlesResult?.interval || getCandleSettings(days).interval,
+          interval:
+            candlesResult?.interval ||
+            getCandleSettings(days, candleInterval).interval,
+          liveTickAt: 0,
         });
         setChartData({ labels: [], datasets: [] });
       }
@@ -197,7 +227,7 @@ function Coin() {
         setLoading(false);
       }
     }
-  }, [days, id, priceType]);
+  }, [candleInterval, days, id, priceType]);
 
   useEffect(() => {
     if (id) {
@@ -213,7 +243,7 @@ function Coin() {
     let isActive = true;
     let fallbackIntervalId;
     let fallbackTimeoutId;
-    const candleSettings = getCandleSettings(days);
+    const candleSettings = getCandleSettings(days, candleInterval);
 
     const stopFallbackPolling = () => {
       window.clearInterval(fallbackIntervalId);
@@ -228,6 +258,10 @@ function Coin() {
         current_price: livePrice,
         price_change_percentage_24h:
           change24h ?? currentCoin.price_change_percentage_24h,
+      }));
+      setCandleMeta((currentMeta) => ({
+        ...currentMeta,
+        liveTickAt: Date.now(),
       }));
 
       setCandleData((currentCandles) =>
@@ -274,10 +308,12 @@ function Coin() {
     const stopCandleStream = subscribeToBinanceKlines(
       id,
       (liveCandle) => {
-        setCandleMeta({
+        setCandleMeta((currentMeta) => ({
+          ...currentMeta,
           source: "Binance",
           interval: candleSettings.interval,
-        });
+          liveTickAt: Date.now(),
+        }));
         setCandleData((currentCandles) =>
           mergeLiveCandle(currentCandles, liveCandle)
         );
@@ -303,17 +339,23 @@ function Coin() {
       stopTickerStream();
       stopCandleStream();
     };
-  }, [coin.id, days, error, id, priceType]);
+  }, [candleInterval, coin.id, days, error, id, priceType]);
 
   const handleDaysChange = (event) => {
     const newDays = Number(event.target.value);
     if (!newDays) return;
     setDays(newDays);
+    setCandleInterval(getDefaultCandleInterval(newDays));
   };
 
   const handlePriceTypeChange = (newPriceType) => {
     if (!newPriceType) return;
     setPriceType(newPriceType);
+  };
+
+  const handleCandleIntervalChange = (newInterval) => {
+    if (!newInterval || newInterval === candleInterval) return;
+    setCandleInterval(newInterval);
   };
 
   const binanceSymbol = getBinanceTickerSymbol({
@@ -342,7 +384,10 @@ function Coin() {
               <CandlestickChart
                 candles={candleData}
                 symbol={candleSymbol}
-                interval={candleMeta.interval}
+                interval={candleInterval}
+                intervals={CANDLE_INTERVALS}
+                liveTickAt={candleMeta.liveTickAt}
+                onIntervalChange={handleCandleIntervalChange}
                 source={candleMeta.source}
               />
             ) : (

@@ -2,38 +2,61 @@
   width: 100%;
 }
 
-.candlestick-toolbar {
+.candlestick-toolbar,
+.candlestick-control-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.85rem;
-  margin-bottom: 0.9rem;
 }
 
-.candlestick-toolbar > div:first-child {
+.candlestick-toolbar {
+  margin-bottom: 0.75rem;
+}
+
+.candlestick-market,
+.candlestick-ohlc,
+.candlestick-intervals,
+.candlestick-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.45rem;
 }
 
-.candlestick-toolbar strong {
+.candlestick-market strong {
   color: var(--white);
   font-size: 0.95rem;
   text-transform: uppercase;
 }
 
-.candlestick-toolbar span {
+.candlestick-market span,
+.candlestick-ohlc span {
   color: var(--grey);
   font-size: 0.78rem;
   font-weight: 800;
 }
 
+.candlestick-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.candlestick-live-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--grey);
+}
+
+.candlestick-source.fresh .candlestick-live-dot {
+  background: var(--green);
+  box-shadow: 0 0 0 5px rgba(22, 199, 132, 0.12);
+}
+
 .candlestick-ohlc {
-  display: flex;
   justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 0.5rem;
   text-align: right;
 }
 
@@ -45,14 +68,75 @@
   color: var(--red);
 }
 
+.candlestick-control-row {
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.candlestick-intervals,
+.candlestick-actions {
+  gap: 0.35rem;
+}
+
+.candlestick-intervals button,
+.candlestick-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  min-height: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--grey);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.candlestick-actions button {
+  width: 2.15rem;
+}
+
+.candlestick-actions .live-action {
+  width: auto;
+  gap: 0.25rem;
+  padding: 0 0.55rem;
+}
+
+.candlestick-intervals button:hover,
+.candlestick-actions button:hover,
+.candlestick-intervals button.active,
+.candlestick-actions button.active {
+  border-color: rgba(79, 140, 255, 0.8);
+  background: rgba(79, 140, 255, 0.12);
+  color: var(--blue);
+}
+
+.candlestick-actions .live-action.active {
+  color: var(--green);
+  border-color: rgba(22, 199, 132, 0.65);
+  background: rgba(22, 199, 132, 0.1);
+}
+
 .candlestick-canvas {
   display: block;
   width: 100%;
-  height: clamp(340px, 52vw, 520px);
+  height: clamp(360px, 55vw, 560px);
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
   cursor: crosshair;
+  touch-action: none;
+}
+
+.candlestick-canvas.dragging {
+  cursor: grabbing;
 }
 
 .candlestick-empty {
@@ -61,8 +145,9 @@
   text-align: center;
 }
 
-@media (max-width: 680px) {
-  .candlestick-toolbar {
+@media (max-width: 760px) {
+  .candlestick-toolbar,
+  .candlestick-control-row {
     align-items: stretch;
     flex-direction: column;
   }
@@ -70,5 +155,14 @@
   .candlestick-ohlc {
     justify-content: flex-start;
     text-align: left;
+  }
+
+  .candlestick-actions,
+  .candlestick-intervals {
+    width: 100%;
+  }
+
+  .candlestick-intervals button {
+    flex: 1;
   }
 }

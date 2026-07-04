@@ -1,13 +1,22 @@
+import MyLocationIcon from "@mui/icons-material/MyLocation";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import ZoomOutIcon from "@mui/icons-material/ZoomOut";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
 
-const MAX_VISIBLE_CANDLES = 180;
-const PRICE_AXIS_WIDTH = 78;
+const DEFAULT_VISIBLE_CANDLES = 96;
+const MIN_VISIBLE_CANDLES = 24;
+const MAX_VISIBLE_CANDLES = 260;
+const PRICE_AXIS_WIDTH = 82;
 const PLOT_LEFT = 16;
 const PLOT_TOP = 18;
-const PLOT_BOTTOM = 28;
+const PLOT_BOTTOM = 30;
 const VOLUME_HEIGHT = 72;
 const VOLUME_GAP = 16;
+const PULSE_MS = 900;
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const formatPrice = (value) => {
   const number = Number(value);
@@ -28,6 +37,16 @@ const formatVolume = (value) =>
     notation: "compact",
     maximumFractionDigits: 2,
   }).format(Number(value) || 0);
+
+const formatTimeLabel = (timestamp, spanMs) => {
+  const date = new Date(timestamp);
+
+  if (spanMs > 3 * 24 * 60 * 60 * 1000) {
+    return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  }
+
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
 
 const toCandle = (candle) => {
   if (Array.isArray(candle)) {
@@ -78,7 +97,35 @@ const getPlotMetrics = (width, height) => {
   };
 };
 
-const drawChart = ({ canvas, candles, hoverIndex }) => {
+const getVisibleWindow = (candles, visibleCount, offsetFromRight) => {
+  const count = clamp(
+    visibleCount,
+    Math.min(MIN_VISIBLE_CANDLES, candles.length || MIN_VISIBLE_CANDLES),
+    Math.min(MAX_VISIBLE_CANDLES, Math.max(candles.length, MIN_VISIBLE_CANDLES))
+  );
+  const maxOffset = Math.max(candles.length - count, 0);
+  const offset = clamp(offsetFromRight, 0, maxOffset);
+  const end = Math.max(candles.length - offset, 0);
+  const start = Math.max(end - count, 0);
+
+  return {
+    count,
+    offset,
+    start,
+    end,
+    candles: candles.slice(start, end),
+    maxOffset,
+  };
+};
+
+const drawChart = ({
+  canvas,
+  candles,
+  currentCandle,
+  hoverIndex,
+  liveIndex,
+  liveTickAt,
+}) => {
   const rect = canvas.getBoundingClientRect();
   const width = Math.max(rect.width, 320);
   const height = Math.max(rect.height, 320);
@@ -102,13 +149,17 @@ const drawChart = ({ canvas, candles, hoverIndex }) => {
   const lows = candles.map((candle) => candle.low);
   const maxHigh = Math.max(...highs);
   const minLow = Math.min(...lows);
-  const pricePadding = Math.max((maxHigh - minLow) * 0.08, maxHigh * 0.002, 1);
+  const pricePadding = Math.max((maxHigh - minLow) * 0.08, maxHigh * 0.0015, 1);
   const maxPrice = maxHigh + pricePadding;
   const minPrice = Math.max(minLow - pricePadding, 0);
   const priceRange = Math.max(maxPrice - minPrice, 1);
   const maxVolume = Math.max(...candles.map((candle) => candle.volume), 1);
   const slotWidth = metrics.plotWidth / candles.length;
-  const bodyWidth = Math.max(Math.min(slotWidth * 0.64, 14), 3);
+  const bodyWidth = Math.max(Math.min(slotWidth * 0.68, 16), 3);
+  const spanMs =
+    candles.at(-1)?.timestamp && candles[0]?.timestamp
+      ? candles.at(-1).timestamp - candles[0].timestamp
+      : 0;
 
   const getY = (price) =>
     metrics.plotTop +
@@ -148,23 +199,18 @@ const drawChart = ({ canvas, candles, hoverIndex }) => {
     ctx.fillText(formatPrice(price), metrics.plotRight + 10, y + 4);
   }
 
-  const timeLabelCount = Math.min(4, candles.length);
+  const timeLabelCount = Math.min(5, candles.length);
   for (let index = 0; index < timeLabelCount; index += 1) {
     const candleIndex = Math.round(
       (index / Math.max(timeLabelCount - 1, 1)) * (candles.length - 1)
     );
     const candle = candles[candleIndex];
     const x = metrics.plotLeft + candleIndex * slotWidth + slotWidth / 2;
-    const date = new Date(candle.timestamp);
 
     ctx.fillStyle = grey;
     ctx.font = "11px Inter, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(
-      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      x,
-      height - 9
-    );
+    ctx.fillText(formatTimeLabel(candle.timestamp, spanMs), x, height - 10);
   }
 
   candles.forEach((candle, index) => {
@@ -198,23 +244,46 @@ const drawChart = ({ canvas, candles, hoverIndex }) => {
     ctx.globalAlpha = 1;
   });
 
-  const latest = candles.at(-1);
-  const latestY = getY(latest.close);
+  if (
+    currentCandle &&
+    currentCandle.close >= minPrice &&
+    currentCandle.close <= maxPrice
+  ) {
+    const latestY = getY(currentCandle.close);
 
-  ctx.strokeStyle = blue;
-  ctx.setLineDash([5, 5]);
-  ctx.beginPath();
-  ctx.moveTo(metrics.plotLeft, latestY);
-  ctx.lineTo(metrics.plotRight, latestY);
-  ctx.stroke();
-  ctx.setLineDash([]);
+    ctx.strokeStyle = blue;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(metrics.plotLeft, latestY);
+    ctx.lineTo(metrics.plotRight, latestY);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-  ctx.fillStyle = blue;
-  ctx.fillRect(metrics.plotRight + 8, latestY - 12, PRICE_AXIS_WIDTH - 14, 24);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "11px Inter, sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText(formatPrice(latest.close), metrics.plotRight + 13, latestY + 4);
+    ctx.fillStyle = blue;
+    ctx.fillRect(metrics.plotRight + 8, latestY - 12, PRICE_AXIS_WIDTH - 14, 24);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "11px Inter, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(formatPrice(currentCandle.close), metrics.plotRight + 13, latestY + 4);
+
+    if (liveIndex >= 0 && liveIndex < candles.length && liveTickAt) {
+      const age = Date.now() - liveTickAt;
+
+      if (age < PULSE_MS) {
+        const x = metrics.plotLeft + liveIndex * slotWidth + slotWidth / 2;
+        const radius = 4 + (age / PULSE_MS) * 18;
+
+        ctx.globalAlpha = 1 - age / PULSE_MS;
+        ctx.strokeStyle = blue;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, latestY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 1;
+      }
+    }
+  }
 
   if (hoverIndex !== null && candles[hoverIndex]) {
     const candle = candles[hoverIndex];
@@ -242,11 +311,19 @@ function CandlestickChart({
   candles = [],
   symbol = "",
   interval = "1m",
+  intervals = ["1m", "5m", "15m", "1h", "4h", "1d"],
   source = "Binance",
+  liveTickAt = 0,
+  onIntervalChange,
 }) {
   const canvasRef = useRef(null);
+  const dragRef = useRef(null);
   const [hoverIndex, setHoverIndex] = useState(null);
-  const visibleCandles = useMemo(
+  const [visibleCount, setVisibleCount] = useState(DEFAULT_VISIBLE_CANDLES);
+  const [offsetFromRight, setOffsetFromRight] = useState(0);
+  const [autoFollow, setAutoFollow] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const normalizedCandles = useMemo(
     () =>
       candles
         .map(toCandle)
@@ -257,19 +334,46 @@ function CandlestickChart({
               Number.isFinite
             )
         )
-        .sort((a, b) => a.timestamp - b.timestamp)
-        .slice(-MAX_VISIBLE_CANDLES),
+        .sort((a, b) => a.timestamp - b.timestamp),
     [candles]
   );
+  const windowState = useMemo(
+    () =>
+      getVisibleWindow(normalizedCandles, visibleCount, offsetFromRight),
+    [normalizedCandles, offsetFromRight, visibleCount]
+  );
+  const visibleCandles = windowState.candles;
+  const currentCandle = normalizedCandles.at(-1);
   const activeCandle =
     hoverIndex !== null && visibleCandles[hoverIndex]
       ? visibleCandles[hoverIndex]
-      : visibleCandles.at(-1);
+      : visibleCandles.at(-1) || currentCandle;
   const change = activeCandle
     ? activeCandle.close - activeCandle.open
     : 0;
   const changePercent =
     activeCandle?.open > 0 ? (change / activeCandle.open) * 100 : 0;
+  const isFresh = liveTickAt && Date.now() - liveTickAt < 4500;
+  const liveIndex = normalizedCandles.length - 1 - windowState.start;
+
+  useEffect(() => {
+    if (autoFollow) {
+      setOffsetFromRight(0);
+    }
+  }, [autoFollow, normalizedCandles.length]);
+
+  useEffect(() => {
+    setVisibleCount(DEFAULT_VISIBLE_CANDLES);
+    setOffsetFromRight(0);
+    setAutoFollow(true);
+    setHoverIndex(null);
+  }, [interval, symbol]);
+
+  useEffect(() => {
+    if (offsetFromRight > windowState.maxOffset) {
+      setOffsetFromRight(windowState.maxOffset);
+    }
+  }, [offsetFromRight, windowState.maxOffset]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -280,7 +384,10 @@ function CandlestickChart({
       drawChart({
         canvas,
         candles: visibleCandles,
+        currentCandle,
         hoverIndex,
+        liveIndex,
+        liveTickAt,
       });
 
     render();
@@ -291,24 +398,111 @@ function CandlestickChart({
     return () => {
       observer.disconnect();
     };
-  }, [hoverIndex, visibleCandles]);
+  }, [currentCandle, hoverIndex, liveIndex, liveTickAt, visibleCandles]);
 
-  const handleMouseMove = (event) => {
-    if (!canvasRef.current || !visibleCandles.length) return;
+  const getPointerIndex = (clientX) => {
+    if (!canvasRef.current || !visibleCandles.length) return null;
 
     const rect = canvasRef.current.getBoundingClientRect();
     const metrics = getPlotMetrics(rect.width, rect.height);
-    const x = event.clientX - rect.left;
+    const x = clientX - rect.left;
     const index = Math.floor(
       ((x - metrics.plotLeft) / metrics.plotWidth) * visibleCandles.length
     );
 
     if (index < 0 || index >= visibleCandles.length) {
-      setHoverIndex(null);
+      return null;
+    }
+
+    return index;
+  };
+
+  const setZoom = (nextCount, focusRatio = 1) => {
+    const clampedCount = clamp(
+      Math.round(nextCount),
+      MIN_VISIBLE_CANDLES,
+      Math.min(MAX_VISIBLE_CANDLES, Math.max(normalizedCandles.length, MIN_VISIBLE_CANDLES))
+    );
+    const safeFocus = clamp(focusRatio, 0, 1);
+    const currentRightDistance =
+      windowState.offset + Math.round((windowState.count - 1) * (1 - safeFocus));
+    const nextOffset = clamp(
+      currentRightDistance - Math.round((clampedCount - 1) * (1 - safeFocus)),
+      0,
+      Math.max(normalizedCandles.length - clampedCount, 0)
+    );
+
+    setVisibleCount(clampedCount);
+    setOffsetFromRight(nextOffset);
+    setAutoFollow(nextOffset === 0);
+  };
+
+  const handleWheel = (event) => {
+    if (!normalizedCandles.length) return;
+
+    event.preventDefault();
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const metrics = getPlotMetrics(rect.width, rect.height);
+    const focusRatio = clamp(
+      (event.clientX - rect.left - metrics.plotLeft) / metrics.plotWidth,
+      0,
+      1
+    );
+    const zoomFactor = event.deltaY > 0 ? 1.18 : 0.82;
+
+    setZoom(windowState.count * zoomFactor, focusRatio);
+  };
+
+  const handlePointerDown = (event) => {
+    if (!canvasRef.current || !visibleCandles.length) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const metrics = getPlotMetrics(rect.width, rect.height);
+
+    dragRef.current = {
+      startX: event.clientX,
+      startOffset: windowState.offset,
+      slotWidth: metrics.plotWidth / visibleCandles.length,
+    };
+    setIsDragging(true);
+    canvasRef.current.setPointerCapture?.(event.pointerId);
+  };
+
+  const handlePointerMove = (event) => {
+    if (dragRef.current) {
+      const dx = event.clientX - dragRef.current.startX;
+      const shift = Math.round(dx / dragRef.current.slotWidth);
+      const nextOffset = clamp(
+        dragRef.current.startOffset + shift,
+        0,
+        windowState.maxOffset
+      );
+
+      setOffsetFromRight(nextOffset);
+      setAutoFollow(nextOffset === 0);
       return;
     }
 
-    setHoverIndex(index);
+    setHoverIndex(getPointerIndex(event.clientX));
+  };
+
+  const stopDragging = (event) => {
+    dragRef.current = null;
+    setIsDragging(false);
+    canvasRef.current?.releasePointerCapture?.(event.pointerId);
+  };
+
+  const resetView = () => {
+    setVisibleCount(DEFAULT_VISIBLE_CANDLES);
+    setOffsetFromRight(0);
+    setAutoFollow(true);
+    setHoverIndex(null);
+  };
+
+  const goLive = () => {
+    setOffsetFromRight(0);
+    setAutoFollow(true);
   };
 
   if (!visibleCandles.length) {
@@ -318,10 +512,13 @@ function CandlestickChart({
   return (
     <div className="candlestick-chart">
       <div className="candlestick-toolbar">
-        <div>
+        <div className="candlestick-market">
           <strong>{symbol || "Market"}</strong>
           <span>{interval}</span>
-          <span>{source}</span>
+          <span className={isFresh ? "candlestick-source fresh" : "candlestick-source"}>
+            <span className="candlestick-live-dot" />
+            {source}
+          </span>
         </div>
         <div className="candlestick-ohlc">
           <span>O {formatPrice(activeCandle.open)}</span>
@@ -335,11 +532,66 @@ function CandlestickChart({
           <span>Vol {formatVolume(activeCandle.volume)}</span>
         </div>
       </div>
+
+      <div className="candlestick-control-row">
+        <div className="candlestick-intervals" aria-label="Candle interval">
+          {intervals.map((item) => (
+            <button
+              type="button"
+              className={item === interval ? "active" : ""}
+              key={item}
+              onClick={() => onIntervalChange?.(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+        <div className="candlestick-actions">
+          <button
+            type="button"
+            className={autoFollow ? "active live-action" : "live-action"}
+            onClick={goLive}
+            title="Follow latest candle"
+          >
+            <MyLocationIcon fontSize="small" />
+            <span>Live</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(windowState.count * 1.18)}
+            title="Zoom out"
+          >
+            <ZoomOutIcon fontSize="small" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(windowState.count * 0.82)}
+            title="Zoom in"
+          >
+            <ZoomInIcon fontSize="small" />
+          </button>
+          <button type="button" onClick={resetView} title="Reset chart">
+            <RestartAltIcon fontSize="small" />
+          </button>
+        </div>
+      </div>
+
       <canvas
         ref={canvasRef}
-        className="candlestick-canvas"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => setHoverIndex(null)}
+        className={isDragging ? "candlestick-canvas dragging" : "candlestick-canvas"}
+        data-auto-follow={autoFollow}
+        data-offset-from-right={windowState.offset}
+        data-visible-count={windowState.count}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={stopDragging}
+        onPointerCancel={stopDragging}
+        onMouseLeave={() => {
+          setHoverIndex(null);
+          dragRef.current = null;
+          setIsDragging(false);
+        }}
+        onWheel={handleWheel}
       />
     </div>
   );
